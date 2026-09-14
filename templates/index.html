@@ -694,6 +694,7 @@
 
       renderTruthTable();
       updateLabels();
+      processCurrentTable();
     }
 
     function toggleRowValue(idx) {
@@ -855,12 +856,76 @@
         }
 
         const d = json.data;
+        const timestamp = Date.now();
+
         document.getElementById('unreducedSop').innerText = d.unreduced_sop || '0';
         document.getElementById('unreducedPos').innerText = d.unreduced_pos || '1';
         document.getElementById('reducedSop').innerText = d.reduced_sop || '0';
         document.getElementById('reducedPos').innerText = d.reduced_pos || '1';
 
         switchKmapTab(currentKmapTab);
+
+        // Actualizar dinámicamente las 10 tarjetas de diagramas y las etiquetas del Paso 3
+        d.tabla_conteo.forEach(r => {
+          const card = document.getElementById('card_' + r.id);
+          if (card) {
+            const img = card.querySelector('img');
+            if (img) {
+              img.src = '/static/generated/' + r.archivo + '?t=' + timestamp;
+            }
+            const dl = card.querySelector('a[download]');
+            if (dl) {
+              dl.href = '/static/generated/' + r.archivo + '?t=' + timestamp;
+            }
+            const p = card.querySelector('p');
+            if (p) {
+              if (r.tipo === 'AND / OR / NOT') {
+                p.innerText = `${r.not} NOT + ${r.and} AND + ${r.or} OR = ${r.total} compuertas (2 entradas)`;
+              } else if (r.nand > 0) {
+                p.innerText = `${r.nand} compuertas NAND de 2 entradas`;
+              } else if (r.nor > 0) {
+                p.innerText = `${r.nor} compuertas NOR de 2 entradas`;
+              }
+            }
+          }
+
+          // Actualizar subtítulo en el checkbox del Paso 3
+          const chk = document.getElementById('chk_' + r.id);
+          if (chk) {
+            const lbl = chk.closest('label');
+            const lblP = lbl ? lbl.querySelector('p') : null;
+            if (lblP) {
+              if (r.tipo === 'AND / OR / NOT') {
+                lblP.innerText = `${r.not} NOT + ${r.and} AND + ${r.or} OR = ${r.total} compuertas`;
+              } else if (r.nand > 0) {
+                lblP.innerText = `${r.nand} compuertas NAND de 2 entradas`;
+              } else if (r.nor > 0) {
+                lblP.innerText = `${r.nor} compuertas NOR de 2 entradas`;
+              }
+            }
+          }
+        });
+
+        // Actualizar badges de ahorro en compuertas de los diagramas reducidos
+        const sopNandDir = d.tabla_conteo.find(x => x.id === 'sop_nand')?.total || 0;
+        const sopNandRed = d.tabla_conteo.find(x => x.id === 'sop_nand_reducido')?.total || 0;
+        const bSopNand = document.querySelector('#card_sop_nand_reducido .bg-brand-100');
+        if (bSopNand) bSopNand.innerText = `${Math.max(0, sopNandDir - sopNandRed)} compuertas ahorradas`;
+
+        const posNandDir = d.tabla_conteo.find(x => x.id === 'pos_nand')?.total || 0;
+        const posNandRed = d.tabla_conteo.find(x => x.id === 'pos_nand_reducido')?.total || 0;
+        const bPosNand = document.querySelector('#card_pos_nand_reducido .bg-brand-100');
+        if (bPosNand) bPosNand.innerText = `${Math.max(0, posNandDir - posNandRed)} compuertas ahorradas`;
+
+        const posNorDir = d.tabla_conteo.find(x => x.id === 'pos_nor')?.total || 0;
+        const posNorRed = d.tabla_conteo.find(x => x.id === 'pos_nor_reducido')?.total || 0;
+        const bPosNor = document.querySelector('#card_pos_nor_reducido .bg-brand-100');
+        if (bPosNor) bPosNor.innerText = `${Math.max(0, posNorDir - posNorRed)} compuertas ahorradas`;
+
+        const sopNorDir = d.tabla_conteo.find(x => x.id === 'sop_nor')?.total || 0;
+        const sopNorRed = d.tabla_conteo.find(x => x.id === 'sop_nor_reducido')?.total || 0;
+        const bSopNor = document.querySelector('#card_sop_nor_reducido .bg-brand-100');
+        if (bSopNor) bSopNor.innerText = `${Math.max(0, sopNorDir - sopNorRed)} compuertas ahorradas`;
 
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -995,15 +1060,16 @@
       const btnMin = document.getElementById('btnKmapMin');
       const btnMax = document.getElementById('btnKmapMax');
       const dlBtn = document.getElementById('kmapDownloadBtn');
+      const t = Date.now();
 
       if (tab === 'min') {
-        img.src = '/static/generated/kmap_miniterminos.png?' + Date.now();
-        dlBtn.href = '/static/generated/kmap_miniterminos.png';
+        img.src = '/static/generated/kmap_miniterminos.png?t=' + t;
+        dlBtn.href = '/static/generated/kmap_miniterminos.png?t=' + t;
         btnMin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition';
         btnMax.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
       } else {
-        img.src = '/static/generated/kmap_maxiterminos.png?' + Date.now();
-        dlBtn.href = '/static/generated/kmap_maxiterminos.png';
+        img.src = '/static/generated/kmap_maxiterminos.png?t=' + t;
+        dlBtn.href = '/static/generated/kmap_maxiterminos.png?t=' + t;
         btnMax.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition';
         btnMin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
       }

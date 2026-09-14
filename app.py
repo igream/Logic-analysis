@@ -137,6 +137,8 @@ def make_binary_tree(items, op):
     return f"({left} {op} {right})"
 
 def build_tree_and_or_not(terms, is_sop=True):
+    if not terms or terms == [[False]] or terms == [[True]]:
+        return ""
     term_op = 'and' if is_sop else 'or'
     top_op = 'or' if is_sop else 'and'
     term_trees = []
@@ -144,6 +146,160 @@ def build_tree_and_or_not(terms, is_sop=True):
         l_strs = [f"(not {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in t]
         term_trees.append(make_binary_tree(l_strs, term_op))
     return make_binary_tree(term_trees, top_op)
+
+def build_tree_nand_direct_sop(terms):
+    if not terms or terms == [[False]] or terms == [[True]]: return ""
+    def nand_and(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nand {extra}) nand ({cur} nand {extra}))"
+        return cur
+    def nand_or(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nand {cur}) nand ({extra} nand {extra}))"
+        return cur
+    term_trees = []
+    for t in terms:
+        l_strs = [f"({l.args[0]} nand {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in t]
+        term_trees.append(nand_and(l_strs))
+    return nand_or(term_trees)
+
+def build_tree_nand_reduced_sop(terms):
+    if not terms or terms == [[False]] or terms == [[True]]: return ""
+    term_trees = []
+    for t in terms:
+        l_strs = [f"({l.args[0]} nand {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in t]
+        if len(l_strs) == 1:
+            l = t[0]
+            term_trees.append(str(l.args[0]) if isinstance(l, sympy.Not) else f"({l} nand {l})")
+        elif len(l_strs) == 2:
+            term_trees.append(f"({l_strs[0]} nand {l_strs[1]})")
+        else:
+            cur = f"({l_strs[0]} nand {l_strs[1]})"
+            for extra in l_strs[2:]:
+                cur = f"(({cur} nand {cur}) nand {extra})"
+            term_trees.append(cur)
+    if len(term_trees) == 1:
+        return f"({term_trees[0]} nand {term_trees[0]})"
+    return make_binary_tree(term_trees, 'nand')
+
+def build_tree_nand_direct_pos(clauses):
+    if not clauses or clauses == [[False]] or clauses == [[True]]: return ""
+    def nand_or(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nand {cur}) nand ({extra} nand {extra}))"
+        return cur
+    def nand_and(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nand {extra}) nand ({cur} nand {extra}))"
+        return cur
+    clause_trees = []
+    for c in clauses:
+        l_strs = [f"({l.args[0]} nand {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in c]
+        clause_trees.append(nand_or(l_strs))
+    return nand_and(clause_trees)
+
+def build_tree_nand_reduced_pos(clauses):
+    if not clauses or clauses == [[False]] or clauses == [[True]]: return ""
+    clause_trees = []
+    for c in clauses:
+        l_strs = [str(l.args[0]) if isinstance(l, sympy.Not) else f"({l} nand {l})" for l in c]
+        if len(l_strs) == 1:
+            clause_trees.append(l_strs[0])
+        else:
+            cur = f"({l_strs[0]} nand {l_strs[1]})"
+            for extra in l_strs[2:]:
+                cur = f"(({cur} nand {cur}) nand {extra})"
+            clause_trees.append(cur)
+    if not clause_trees: return ""
+    cur = clause_trees[0]
+    for extra in clause_trees[1:]:
+        cur = f"(({cur} nand {extra}) nand ({cur} nand {extra}))"
+    return cur
+
+def build_tree_nor_direct_pos(clauses):
+    if not clauses or clauses == [[False]] or clauses == [[True]]: return ""
+    def nor_or(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nor {extra}) nor ({cur} nor {extra}))"
+        return cur
+    def nor_and(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nor {cur}) nor ({extra} nor {extra}))"
+        return cur
+    clause_trees = []
+    for c in clauses:
+        l_strs = [f"({l.args[0]} nor {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in c]
+        clause_trees.append(nor_or(l_strs))
+    return nor_and(clause_trees)
+
+def build_tree_nor_reduced_pos(clauses):
+    if not clauses or clauses == [[False]] or clauses == [[True]]: return ""
+    clause_trees = []
+    for c in clauses:
+        l_strs = [f"({l.args[0]} nor {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in c]
+        if len(l_strs) == 1:
+            l = c[0]
+            clause_trees.append(str(l.args[0]) if isinstance(l, sympy.Not) else f"({l} nor {l})")
+        elif len(l_strs) == 2:
+            clause_trees.append(f"({l_strs[0]} nor {l_strs[1]})")
+        else:
+            cur = f"({l_strs[0]} nor {l_strs[1]})"
+            for extra in l_strs[2:]:
+                cur = f"(({cur} nor {cur}) nor {extra})"
+            clause_trees.append(cur)
+    if len(clause_trees) == 1:
+        return f"({clause_trees[0]} nor {clause_trees[0]})"
+    return make_binary_tree(clause_trees, 'nor')
+
+def build_tree_nor_direct_sop(terms):
+    if not terms or terms == [[False]] or terms == [[True]]: return ""
+    def nor_and(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nor {cur}) nor ({extra} nor {extra}))"
+        return cur
+    def nor_or(items):
+        if not items: return ""
+        cur = items[0]
+        for extra in items[1:]:
+            cur = f"(({cur} nor {extra}) nor ({cur} nor {extra}))"
+        return cur
+    term_trees = []
+    for t in terms:
+        l_strs = [f"({l.args[0]} nor {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in t]
+        term_trees.append(nor_and(l_strs))
+    return nor_or(term_trees)
+
+def build_tree_nor_reduced_sop(terms):
+    if not terms or terms == [[False]] or terms == [[True]]: return ""
+    term_trees = []
+    for t in terms:
+        l_strs = [str(l.args[0]) if isinstance(l, sympy.Not) else f"({l} nor {l})" for l in t]
+        if len(l_strs) == 1:
+            term_trees.append(l_strs[0])
+        else:
+            cur = f"({l_strs[0]} nor {l_strs[1]})"
+            for extra in l_strs[2:]:
+                cur = f"(({cur} nor {cur}) nor {extra})"
+            term_trees.append(cur)
+    if not term_trees: return ""
+    cur = term_trees[0]
+    for extra in term_trees[1:]:
+        cur = f"(({cur} nor {extra}) nor ({cur} nor {extra}))"
+    return cur
 
 def term_to_pattern(term, vars_list, is_sop=True):
     sub_cls = sympy.And if is_sop else sympy.Or
@@ -158,13 +314,44 @@ def term_to_pattern(term, vars_list, is_sop=True):
 
 def render_diagram_to_file(expr_str, outlabel, title, filename, figsize=(16, 9)):
     filepath = os.path.join(STATIC_GEN_DIR, filename)
-    d = logicparse(expr_str, outlabel=outlabel)
-    fig, ax = plt.subplots(figsize=figsize, dpi=180)
-    d.draw(canvas=ax, show=False)
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=18)
-    ax.axis('off')
-    plt.savefig(filepath, dpi=180, bbox_inches='tight')
-    plt.close(fig)
+    try:
+        if not expr_str or str(expr_str) in ['0', 'False']:
+            fig, ax = plt.subplots(figsize=(8, 3), dpi=180)
+            d = schemdraw.Drawing()
+            d.add(logic.Line().right(2).label('0 (GND)', loc='left').label(outlabel, loc='right'))
+            d.draw(canvas=ax, show=False)
+            ax.set_title(title, fontsize=11, fontweight='bold', pad=16)
+            ax.axis('off')
+            plt.savefig(filepath, dpi=180, bbox_inches='tight')
+            plt.close(fig)
+            return filepath
+        elif str(expr_str) in ['1', 'True']:
+            fig, ax = plt.subplots(figsize=(8, 3), dpi=180)
+            d = schemdraw.Drawing()
+            d.add(logic.Line().right(2).label('1 (VCC)', loc='left').label(outlabel, loc='right'))
+            d.draw(canvas=ax, show=False)
+            ax.set_title(title, fontsize=11, fontweight='bold', pad=16)
+            ax.axis('off')
+            plt.savefig(filepath, dpi=180, bbox_inches='tight')
+            plt.close(fig)
+            return filepath
+
+        d = logicparse(expr_str, outlabel=outlabel)
+        fig, ax = plt.subplots(figsize=figsize, dpi=180)
+        d.draw(canvas=ax, show=False)
+        ax.set_title(title, fontsize=11, fontweight='bold', pad=16)
+        ax.axis('off')
+        plt.savefig(filepath, dpi=180, bbox_inches='tight')
+        plt.close(fig)
+    except Exception as e:
+        print(f"Error generando {filename}: {e}")
+        fig, ax = plt.subplots(figsize=(10, 4), dpi=180)
+        ax.text(0.5, 0.5, f"{title}\n\nFunción: {outlabel} = {str(expr_str)[:70]}", 
+                ha='center', va='center', fontsize=11, fontweight='bold',
+                bbox=dict(boxstyle="round,pad=1", fc="#f8fafc", ec="#cbd5e1", lw=1.5))
+        ax.axis('off')
+        plt.savefig(filepath, dpi=180, bbox_inches='tight')
+        plt.close(fig)
     return filepath
 
 def process_logic(variables, zeros, ones):
@@ -345,15 +532,83 @@ def process_logic(variables, zeros, ones):
         kmaps['maxiterminos'] = 'kmap_maxiterminos.png'
 
     # 4. Diagramas de Circuitos
-    if not (zeros == [0, 1, 2, 5, 6, 7, 11, 15] and variables == ['A', 'B', 'C', 'D']):
+    orig_map = {
+        "diagrama_SOP_AND_OR_NOT.png": os.path.join(BASE_DIR, "Resultados", "02_Diagramas_AND_OR_NOT", "diagrama_SOP_AND_OR_NOT.png"),
+        "diagrama_POS_AND_OR_NOT.png": os.path.join(BASE_DIR, "Resultados", "02_Diagramas_AND_OR_NOT", "diagrama_POS_AND_OR_NOT.png"),
+        "diagrama_SOP_NAND.png": os.path.join(BASE_DIR, "Resultados", "03_Diagramas_NAND", "diagrama_SOP_NAND.png"),
+        "diagrama_SOP_NAND_reducido.png": os.path.join(BASE_DIR, "Resultados", "03_Diagramas_NAND", "diagrama_SOP_NAND_reducido.png"),
+        "diagrama_POS_NAND.png": os.path.join(BASE_DIR, "Resultados", "03_Diagramas_NAND", "diagrama_POS_NAND.png"),
+        "diagrama_POS_NAND_reducido.png": os.path.join(BASE_DIR, "Resultados", "03_Diagramas_NAND", "diagrama_POS_NAND_reducido.png"),
+        "diagrama_POS_NOR.png": os.path.join(BASE_DIR, "Resultados", "04_Diagramas_NOR", "diagrama_POS_NOR.png"),
+        "diagrama_POS_NOR_reducido.png": os.path.join(BASE_DIR, "Resultados", "04_Diagramas_NOR", "diagrama_POS_NOR_reducido.png"),
+        "diagrama_SOP_NOR.png": os.path.join(BASE_DIR, "Resultados", "04_Diagramas_NOR", "diagrama_SOP_NOR.png"),
+        "diagrama_SOP_NOR_reducido.png": os.path.join(BASE_DIR, "Resultados", "04_Diagramas_NOR", "diagrama_SOP_NOR_reducido.png"),
+    }
+
+    if zeros == [0, 1, 2, 5, 6, 7, 11, 15] and variables == ['A', 'B', 'C', 'D']:
+        for fname, src_path in orig_map.items():
+            if os.path.exists(src_path):
+                shutil.copy2(src_path, os.path.join(STATIC_GEN_DIR, fname))
+    else:
+        # 1. SOP AND/OR/NOT
         tree_sop = build_tree_and_or_not(sop_terms, is_sop=True)
         render_diagram_to_file(tree_sop, "F'",
                                f"Minitérminos (SOP) - NOT, AND, OR (2 entradas)\nf' = {format_sop_str(reduced_sop)}",
                                "diagrama_SOP_AND_OR_NOT.png")
+
+        # 2. POS AND/OR/NOT
         tree_pos = build_tree_and_or_not(pos_clauses, is_sop=False)
         render_diagram_to_file(tree_pos, "F",
                                f"Maxitérminos (POS) - NOT, AND, OR (2 entradas)\nf = {format_pos_str(reduced_pos)}",
                                "diagrama_POS_AND_OR_NOT.png")
+
+        # 3. SOP NAND Directo
+        t_sop_nand = build_tree_nand_direct_sop(sop_terms)
+        render_diagram_to_file(t_sop_nand, "F'",
+                               f"SOP Universal NAND Directo (2 entradas)\nf' = {format_sop_str(reduced_sop)}",
+                               "diagrama_SOP_NAND.png")
+
+        # 4. SOP NAND Reducido
+        t_sop_nand_red = build_tree_nand_reduced_sop(sop_terms)
+        render_diagram_to_file(t_sop_nand_red, "F'",
+                               f"SOP Universal NAND Reducido (Doble Negación)\nf' = {format_sop_str(reduced_sop)}",
+                               "diagrama_SOP_NAND_reducido.png")
+
+        # 5. POS NAND Directo
+        t_pos_nand = build_tree_nand_direct_pos(pos_clauses)
+        render_diagram_to_file(t_pos_nand, "F",
+                               f"POS Universal NAND Directo (2 entradas)\nf = {format_pos_str(reduced_pos)}",
+                               "diagrama_POS_NAND.png")
+
+        # 6. POS NAND Reducido
+        t_pos_nand_red = build_tree_nand_reduced_pos(pos_clauses)
+        render_diagram_to_file(t_pos_nand_red, "F",
+                               f"POS Universal NAND Reducido (Doble Negación)\nf = {format_pos_str(reduced_pos)}",
+                               "diagrama_POS_NAND_reducido.png")
+
+        # 7. POS NOR Directo
+        t_pos_nor = build_tree_nor_direct_pos(pos_clauses)
+        render_diagram_to_file(t_pos_nor, "F",
+                               f"POS Universal NOR Directo (2 entradas)\nf = {format_pos_str(reduced_pos)}",
+                               "diagrama_POS_NOR.png")
+
+        # 8. POS NOR Reducido
+        t_pos_nor_red = build_tree_nor_reduced_pos(pos_clauses)
+        render_diagram_to_file(t_pos_nor_red, "F",
+                               f"POS Universal NOR Reducido (Doble Negación)\nf = {format_pos_str(reduced_pos)}",
+                               "diagrama_POS_NOR_reducido.png")
+
+        # 9. SOP NOR Directo
+        t_sop_nor = build_tree_nor_direct_sop(sop_terms)
+        render_diagram_to_file(t_sop_nor, "F'",
+                               f"SOP Universal NOR Directo (2 entradas)\nf' = {format_sop_str(reduced_sop)}",
+                               "diagrama_SOP_NOR.png")
+
+        # 10. SOP NOR Reducido
+        t_sop_nor_red = build_tree_nor_reduced_sop(sop_terms)
+        render_diagram_to_file(t_sop_nor_red, "F'",
+                               f"SOP Universal NOR Reducido (Doble Negación)\nf' = {format_sop_str(reduced_sop)}",
+                               "diagrama_SOP_NOR_reducido.png")
 
     results = {
         "num_bits": n_vars,
@@ -459,6 +714,13 @@ def download_zip():
         zf.writestr("funcion_ejemplo.txt", DEFAULT_CONFIG)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="Resultados_Logic_Analisis.zip", mimetype="application/zip")
+
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 if __name__ == "__main__":
     print("Iniciando Servidor Web Logic-Analisis en http://localhost:5000")
