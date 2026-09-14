@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Servidor Web Flask para Reductor Lógico y Síntesis de Circuitos
 Permite:
@@ -229,16 +229,16 @@ def process_logic(variables, zeros, ones):
         nor_sop_red = 22
 
     tabla_conteo = [
-        {"num": 1, "nombre": "SOP Minitérminos (f')", "tipo": "AND / OR / NOT", "not": n_not_sop, "and": n_and_sop, "or": n_or_sop, "nand": 0, "nor": 0, "total": total_sop_std, "archivo": "diagrama_SOP_AND_OR_NOT.png"},
-        {"num": 2, "nombre": "POS Maxitérminos (f)", "tipo": "AND / OR / NOT", "not": n_not_pos, "and": n_and_pos, "or": n_or_pos, "nand": 0, "nor": 0, "total": total_pos_std, "archivo": "diagrama_POS_AND_OR_NOT.png"},
-        {"num": 3, "nombre": "SOP Universal NAND", "tipo": "NAND Directo", "not": 0, "and": 0, "or": 0, "nand": nand_sop_dir, "nor": 0, "total": nand_sop_dir, "archivo": "diagrama_SOP_NAND.png"},
-        {"num": 4, "nombre": "SOP Universal NAND Reducido", "tipo": "NAND Doble Negación", "not": 0, "and": 0, "or": 0, "nand": nand_sop_red, "nor": 0, "total": nand_sop_red, "archivo": "diagrama_SOP_NAND_reducido.png"},
-        {"num": 5, "nombre": "POS Universal NAND", "tipo": "NAND Directo", "not": 0, "and": 0, "or": 0, "nand": nand_pos_dir, "nor": 0, "total": nand_pos_dir, "archivo": "diagrama_POS_NAND.png"},
-        {"num": 6, "nombre": "POS Universal NAND Reducido", "tipo": "NAND Doble Negación", "not": 0, "and": 0, "or": 0, "nand": nand_pos_red, "nor": 0, "total": nand_pos_red, "archivo": "diagrama_POS_NAND_reducido.png"},
-        {"num": 7, "nombre": "POS Universal NOR", "tipo": "NOR Directo", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_pos_dir, "total": nor_pos_dir, "archivo": "diagrama_POS_NOR.png"},
-        {"num": 8, "nombre": "POS Universal NOR Reducido", "tipo": "NOR Doble Negación", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_pos_red, "total": nor_pos_red, "archivo": "diagrama_POS_NOR_reducido.png"},
-        {"num": 9, "nombre": "SOP Universal NOR", "tipo": "NOR Directo", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_sop_dir, "total": nor_sop_dir, "archivo": "diagrama_SOP_NOR.png"},
-        {"num": 10, "nombre": "SOP Universal NOR Reducido", "tipo": "NOR Doble Negación", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_sop_red, "total": nor_sop_red, "archivo": "diagrama_SOP_NOR_reducido.png"},
+        {"num": 1, "id": "sop_and_or_not", "nombre": "SOP Minitérminos (f')", "tipo": "AND / OR / NOT", "not": n_not_sop, "and": n_and_sop, "or": n_or_sop, "nand": 0, "nor": 0, "total": total_sop_std, "archivo": "diagrama_SOP_AND_OR_NOT.png"},
+        {"num": 2, "id": "pos_and_or_not", "nombre": "POS Maxitérminos (f)", "tipo": "AND / OR / NOT", "not": n_not_pos, "and": n_and_pos, "or": n_or_pos, "nand": 0, "nor": 0, "total": total_pos_std, "archivo": "diagrama_POS_AND_OR_NOT.png"},
+        {"num": 3, "id": "sop_nand", "nombre": "SOP Universal NAND", "tipo": "NAND Directo", "not": 0, "and": 0, "or": 0, "nand": nand_sop_dir, "nor": 0, "total": nand_sop_dir, "archivo": "diagrama_SOP_NAND.png"},
+        {"num": 4, "id": "sop_nand_reducido", "nombre": "SOP Universal NAND Reducido", "tipo": "NAND Doble Negación", "not": 0, "and": 0, "or": 0, "nand": nand_sop_red, "nor": 0, "total": nand_sop_red, "archivo": "diagrama_SOP_NAND_reducido.png"},
+        {"num": 5, "id": "pos_nand", "nombre": "POS Universal NAND", "tipo": "NAND Directo", "not": 0, "and": 0, "or": 0, "nand": nand_pos_dir, "nor": 0, "total": nand_pos_dir, "archivo": "diagrama_POS_NAND.png"},
+        {"num": 6, "id": "pos_nand_reducido", "nombre": "POS Universal NAND Reducido", "tipo": "NAND Doble Negación", "not": 0, "and": 0, "or": 0, "nand": nand_pos_red, "nor": 0, "total": nand_pos_red, "archivo": "diagrama_POS_NAND_reducido.png"},
+        {"num": 7, "id": "pos_nor", "nombre": "POS Universal NOR", "tipo": "NOR Directo", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_pos_dir, "total": nor_pos_dir, "archivo": "diagrama_POS_NOR.png"},
+        {"num": 8, "id": "pos_nor_reducido", "nombre": "POS Universal NOR Reducido", "tipo": "NOR Doble Negación", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_pos_red, "total": nor_pos_red, "archivo": "diagrama_POS_NOR_reducido.png"},
+        {"num": 9, "id": "sop_nor", "nombre": "SOP Universal NOR", "tipo": "NOR Directo", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_sop_dir, "total": nor_sop_dir, "archivo": "diagrama_SOP_NOR.png"},
+        {"num": 10, "id": "sop_nor_reducido", "nombre": "SOP Universal NOR Reducido", "tipo": "NOR Doble Negación", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": nor_sop_red, "total": nor_sop_red, "archivo": "diagrama_SOP_NOR_reducido.png"},
     ]
 
     # 3. Generar Mapas de Karnaugh
@@ -429,12 +429,33 @@ def download_config():
 
 @app.route("/api/download_zip")
 def download_zip():
+    selected = request.args.get("diagrams", "").strip()
+    selected_files = set()
+    id_map = {
+        "sop_and_or_not": "diagrama_SOP_AND_OR_NOT.png",
+        "pos_and_or_not": "diagrama_POS_AND_OR_NOT.png",
+        "sop_nand": "diagrama_SOP_NAND.png",
+        "sop_nand_reducido": "diagrama_SOP_NAND_reducido.png",
+        "pos_nand": "diagrama_POS_NAND.png",
+        "pos_nand_reducido": "diagrama_POS_NAND_reducido.png",
+        "pos_nor": "diagrama_POS_NOR.png",
+        "pos_nor_reducido": "diagrama_POS_NOR_reducido.png",
+        "sop_nor": "diagrama_SOP_NOR.png",
+        "sop_nor_reducido": "diagrama_SOP_NOR_reducido.png",
+    }
+    if selected:
+        for k in selected.split(","):
+            k = k.strip()
+            if k in id_map: selected_files.add(id_map[k])
+            elif k.endswith(".png"): selected_files.add(k)
+
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         for fname in os.listdir(STATIC_GEN_DIR):
             if fname.endswith(".png"):
-                fpath = os.path.join(STATIC_GEN_DIR, fname)
-                zf.write(fpath, arcname=f"Resultados/{fname}")
+                if not selected_files or fname in selected_files or fname.startswith("kmap_"):
+                    fpath = os.path.join(STATIC_GEN_DIR, fname)
+                    zf.write(fpath, arcname=f"Resultados/{fname}")
         zf.writestr("funcion_ejemplo.txt", DEFAULT_CONFIG)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="Resultados_Logic_Analisis.zip", mimetype="application/zip")

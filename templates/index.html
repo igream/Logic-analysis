@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -43,7 +43,7 @@
           <i class="fa-brands fa-github text-sm"></i>
           <span>GitHub</span>
         </a>
-        <a href="/api/download_zip" class="inline-flex items-center space-x-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+        <a href="/api/download_zip" class="zip-download-btn inline-flex items-center space-x-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
           <i class="fa-solid fa-file-zipper"></i>
           <span>Descargar Todo (.ZIP)</span>
         </a>
@@ -123,6 +123,147 @@
         </div>
 
         <div id="truthTableContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </div>
+
+        <!-- Paso 3: Preguntar al usuario cuáles de los 10 diagramas le interesan -->
+        <div class="pt-6 border-t border-slate-200 space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-sm">3</span>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">¿Cuáles de los 10 diagramas iniciales te interesan?</h3>
+                <p class="text-xs text-slate-500">Selecciona uno, varios o todos los esquemáticos a generar y analizar:</p>
+              </div>
+            </div>
+
+            <!-- Botones de Selección Rápida -->
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <button type="button" onclick="selectDiagramGroup('all')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Todos (10)</button>
+              <button type="button" onclick="selectDiagramGroup('reduced')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg border border-indigo-200 transition">Solo Reducidos (4)</button>
+              <button type="button" onclick="selectDiagramGroup('and_or')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Solo AND/OR/NOT (2)</button>
+              <button type="button" onclick="selectDiagramGroup('nand')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Solo NAND (4)</button>
+              <button type="button" onclick="selectDiagramGroup('nor')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Solo NOR (4)</button>
+              <button type="button" onclick="selectDiagramGroup('none')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-500 font-medium rounded-lg transition">Deseleccionar</button>
+            </div>
+          </div>
+
+          <!-- Grid de los 10 Diagramas -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="diagramCheckboxesContainer">
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-brand-300 cursor-pointer transition">
+              <input type="checkbox" id="chk_sop_and_or_not" value="sop_and_or_not" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">1. SOP Minitérminos (AND / OR / NOT)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">Estándar</span>
+                </div>
+                <p class="text-slate-500 text-[11px]">4 NOT + 8 AND + 3 OR = 15 compuertas</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-brand-300 cursor-pointer transition">
+              <input type="checkbox" id="chk_pos_and_or_not" value="pos_and_or_not" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">2. POS Maxitérminos (AND / OR / NOT)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">Estándar</span>
+                </div>
+                <p class="text-slate-500 text-[11px]">4 NOT + 8 OR + 3 AND = 15 compuertas</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-brand-300 cursor-pointer transition">
+              <input type="checkbox" id="chk_sop_nand" value="sop_nand" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">3. SOP Universal NAND (Directo)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">NAND Directo</span>
+                </div>
+                <p class="text-slate-500 text-[11px]">29 compuertas NAND de 2 entradas</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 hover:border-brand-400 cursor-pointer transition shadow-xs">
+              <input type="checkbox" id="chk_sop_nand_reducido" value="sop_nand_reducido" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-indigo-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-brand-900">4. SOP Universal NAND (Doble Negación)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Ahorro: 8 compuertas</span>
+                </div>
+                <p class="text-slate-600 text-[11px]">Cancelación en frontera AND-OR | Total: 21 NAND</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-brand-300 cursor-pointer transition">
+              <input type="checkbox" id="chk_pos_nand" value="pos_nand" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">5. POS Universal NAND (Directo)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">NAND Directo</span>
+                </div>
+                <p class="text-slate-500 text-[11px]">34 compuertas NAND de 2 entradas</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 hover:border-brand-400 cursor-pointer transition shadow-xs">
+              <input type="checkbox" id="chk_pos_nand_reducido" value="pos_nand_reducido" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-indigo-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-brand-900">6. POS Universal NAND (Doble Negación)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Ahorro: 12 compuertas</span>
+                </div>
+                <p class="text-slate-600 text-[11px]">Cancelación en literales negados | Total: 22 NAND</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-brand-300 cursor-pointer transition">
+              <input type="checkbox" id="chk_pos_nor" value="pos_nor" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">7. POS Universal NOR (Directo)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">NOR Directo</span>
+                </div>
+                <p class="text-slate-500 text-[11px]">29 compuertas NOR de 2 entradas</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 hover:border-brand-400 cursor-pointer transition shadow-xs">
+              <input type="checkbox" id="chk_pos_nor_reducido" value="pos_nor_reducido" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-indigo-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-brand-900">8. POS Universal NOR (Doble Negación)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Ahorro: 8 compuertas</span>
+                </div>
+                <p class="text-slate-600 text-[11px]">Cancelación en frontera OR-AND | Total: 21 NOR</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-brand-300 cursor-pointer transition">
+              <input type="checkbox" id="chk_sop_nor" value="sop_nor" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">9. SOP Universal NOR (Directo)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">NOR Directo</span>
+                </div>
+                <p class="text-slate-500 text-[11px]">34 compuertas NOR de 2 entradas</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-3 p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 hover:border-brand-400 cursor-pointer transition shadow-xs">
+              <input type="checkbox" id="chk_sop_nor_reducido" value="sop_nor_reducido" checked onchange="updateSelectedDiagramsCount()" class="mt-0.5 h-4 w-4 rounded border-indigo-300 text-brand-600 focus:ring-brand-500">
+              <div class="flex-1 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-brand-900">10. SOP Universal NOR (Doble Negación)</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Ahorro: 12 compuertas</span>
+                </div>
+                <p class="text-slate-600 text-[11px]">Cancelación en literales negados | Total: 22 NOR</p>
+              </div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+            <span>Diagramas seleccionados a generar: <b id="lblDiagCount" class="text-brand-700 font-bold font-mono">10 de 10</b></span>
+            <span class="text-[11px] text-slate-400">Solo se generarán y descargarán los esquemáticos marcados</span>
+          </div>
         </div>
 
         <div class="pt-4 flex justify-end">
@@ -212,7 +353,12 @@
         </div>
 
         <div id="gallery_and_or" class="grid grid-cols-1 gap-6">
-          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div id="empty_gallery_and_or" class="hidden text-center py-10 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500">
+            <i class="fa-solid fa-eye-slash text-2xl text-slate-400 mb-2"></i>
+            <p class="text-xs">No has seleccionado diagramas de la familia <b>AND / OR / NOT</b> en el Paso 3.</p>
+          </div>
+
+          <div id="card_sop_and_or_not" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-900">SOP Minitérminos (f') - Compuertas Estándar</h4>
@@ -225,7 +371,7 @@
             <img src="/static/generated/diagrama_SOP_AND_OR_NOT.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama SOP AND OR NOT">
           </div>
 
-          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div id="card_pos_and_or_not" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-900">POS Maxitérminos (f) - Compuertas Estándar</h4>
@@ -240,7 +386,12 @@
         </div>
 
         <div id="gallery_nand" class="hidden grid grid-cols-1 gap-6">
-          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div id="empty_gallery_nand" class="hidden text-center py-10 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500">
+            <i class="fa-solid fa-eye-slash text-2xl text-slate-400 mb-2"></i>
+            <p class="text-xs">No has seleccionado diagramas de la familia <b>Universal NAND</b> en el Paso 3.</p>
+          </div>
+
+          <div id="card_sop_nand" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-900">SOP NAND Universal (Directo)</h4>
@@ -253,7 +404,7 @@
             <img src="/static/generated/diagrama_SOP_NAND.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama SOP NAND">
           </div>
 
-          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+          <div id="card_sop_nand_reducido" class="circuit-card bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
@@ -269,7 +420,7 @@
             <img src="/static/generated/diagrama_SOP_NAND_reducido.png" class="w-full rounded-lg border border-indigo-200 bg-white" alt="Diagrama SOP NAND Reducido">
           </div>
 
-          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div id="card_pos_nand" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-900">POS NAND Universal (Directo)</h4>
@@ -282,7 +433,7 @@
             <img src="/static/generated/diagrama_POS_NAND.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama POS NAND">
           </div>
 
-          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+          <div id="card_pos_nand_reducido" class="circuit-card bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
@@ -300,7 +451,12 @@
         </div>
 
         <div id="gallery_nor" class="hidden grid grid-cols-1 gap-6">
-          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div id="empty_gallery_nor" class="hidden text-center py-10 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500">
+            <i class="fa-solid fa-eye-slash text-2xl text-slate-400 mb-2"></i>
+            <p class="text-xs">No has seleccionado diagramas de la familia <b>Universal NOR</b> en el Paso 3.</p>
+          </div>
+
+          <div id="card_pos_nor" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-900">POS NOR Universal (Directo)</h4>
@@ -313,7 +469,7 @@
             <img src="/static/generated/diagrama_POS_NOR.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama POS NOR">
           </div>
 
-          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+          <div id="card_pos_nor_reducido" class="circuit-card bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
@@ -329,7 +485,7 @@
             <img src="/static/generated/diagrama_POS_NOR_reducido.png" class="w-full rounded-lg border border-indigo-200 bg-white" alt="Diagrama POS NOR Reducido">
           </div>
 
-          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div id="card_sop_nor" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-slate-900">SOP NOR Universal (Directo)</h4>
@@ -342,7 +498,7 @@
             <img src="/static/generated/diagrama_SOP_NOR.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama SOP NOR">
           </div>
 
-          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+          <div id="card_sop_nor_reducido" class="circuit-card bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
@@ -370,7 +526,7 @@
             </h3>
             <p class="text-xs text-slate-500 mt-0.5">Todas las compuertas implementadas son estrictamente de 2 entradas.</p>
           </div>
-          <a href="/api/download_zip" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+          <a href="/api/download_zip" class="zip-download-btn inline-flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
             <i class="fa-solid fa-file-zipper"></i>
             <span>Descargar Todo (.ZIP)</span>
           </a>
@@ -409,6 +565,110 @@
     const varNamesPool = ['A', 'B', 'C', 'D', 'E'];
     let rowValues = {};
     let currentKmapTab = 'min';
+    const allDiagramIds = [
+      'sop_and_or_not',
+      'pos_and_or_not',
+      'sop_nand',
+      'sop_nand_reducido',
+      'pos_nand',
+      'pos_nand_reducido',
+      'pos_nor',
+      'pos_nor_reducido',
+      'sop_nor',
+      'sop_nor_reducido'
+    ];
+
+    function getSelectedDiagrams() {
+      return allDiagramIds.filter(id => {
+        const el = document.getElementById('chk_' + id);
+        return el && el.checked;
+      });
+    }
+
+    function updateSelectedDiagramsCount() {
+      const selected = getSelectedDiagrams();
+      const lbl = document.getElementById('lblDiagCount');
+      if (lbl) {
+        lbl.innerText = `${selected.length} de ${allDiagramIds.length}`;
+      }
+      
+      const zipQuery = selected.length === allDiagramIds.length
+        ? '/api/download_zip'
+        : (selected.length === 0 ? '#' : `/api/download_zip?diagrams=${selected.join(',')}`);
+
+      document.querySelectorAll('.zip-download-btn').forEach(btn => {
+        btn.href = zipQuery;
+        if (selected.length === 0) {
+          btn.classList.add('opacity-50', 'pointer-events-none');
+        } else {
+          btn.classList.remove('opacity-50', 'pointer-events-none');
+        }
+      });
+
+      applyDiagramFiltering();
+    }
+
+    function selectDiagramGroup(group) {
+      let targetSet = new Set();
+      if (group === 'all') {
+        targetSet = new Set(allDiagramIds);
+      } else if (group === 'reduced') {
+        targetSet = new Set(['sop_nand_reducido', 'pos_nand_reducido', 'pos_nor_reducido', 'sop_nor_reducido']);
+      } else if (group === 'and_or') {
+        targetSet = new Set(['sop_and_or_not', 'pos_and_or_not']);
+      } else if (group === 'nand') {
+        targetSet = new Set(['sop_nand', 'sop_nand_reducido', 'pos_nand', 'pos_nand_reducido']);
+      } else if (group === 'nor') {
+        targetSet = new Set(['pos_nor', 'pos_nor_reducido', 'sop_nor', 'sop_nor_reducido']);
+      } else if (group === 'none') {
+        targetSet = new Set();
+      }
+
+      allDiagramIds.forEach(id => {
+        const el = document.getElementById('chk_' + id);
+        if (el) el.checked = targetSet.has(id);
+      });
+
+      updateSelectedDiagramsCount();
+    }
+
+    function applyDiagramFiltering() {
+      const selected = new Set(getSelectedDiagrams());
+
+      allDiagramIds.forEach(id => {
+        const card = document.getElementById('card_' + id);
+        if (card) {
+          if (selected.has(id)) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        }
+      });
+
+      const andOrVisible = ['sop_and_or_not', 'pos_and_or_not'].some(id => selected.has(id));
+      const emptyAndOr = document.getElementById('empty_gallery_and_or');
+      if (emptyAndOr) emptyAndOr.classList.toggle('hidden', andOrVisible);
+
+      const nandVisible = ['sop_nand', 'sop_nand_reducido', 'pos_nand', 'pos_nand_reducido'].some(id => selected.has(id));
+      const emptyNand = document.getElementById('empty_gallery_nand');
+      if (emptyNand) emptyNand.classList.toggle('hidden', nandVisible);
+
+      const norVisible = ['pos_nor', 'pos_nor_reducido', 'sop_nor', 'sop_nor_reducido'].some(id => selected.has(id));
+      const emptyNor = document.getElementById('empty_gallery_nor');
+      if (emptyNor) emptyNor.classList.toggle('hidden', norVisible);
+
+      allDiagramIds.forEach(id => {
+        const row = document.getElementById('tbl_row_' + id);
+        if (row) {
+          if (selected.has(id)) {
+            row.classList.remove('opacity-25', 'grayscale');
+          } else {
+            row.classList.add('opacity-25', 'grayscale');
+          }
+        }
+      });
+    }
 
     function setNumBits(n) {
       if (n < 2 || n > 5) return;
@@ -606,6 +866,7 @@
         tbody.innerHTML = '';
         d.tabla_conteo.forEach(r => {
           const tr = document.createElement('tr');
+          tr.id = 'tbl_row_' + r.id;
           tr.className = 'hover:bg-slate-50 transition';
           tr.innerHTML = `
             <td class="px-4 py-2.5 font-bold text-slate-700">${r.num}</td>
@@ -620,6 +881,8 @@
           `;
           tbody.appendChild(tr);
         });
+
+        applyDiagramFiltering();
 
       } catch (err) {
         alert('Error de conexión: ' + err.message);
@@ -774,6 +1037,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       setNumBits(4);
+      updateSelectedDiagramsCount();
       processCurrentTable();
     });
   </script>
