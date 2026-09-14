@@ -2,6 +2,7 @@
 """
 Motor Principal de Deducción y Síntesis Lógica (Logic Engine)
 Orquesta el análisis booleano, conteo de compuertas, mapas de Karnaugh y diagramas de circuitos.
+Optimizado dinámicamente para consumo eficiente de RAM y alta velocidad local.
 """
 
 import os
@@ -10,15 +11,16 @@ import sympy
 from .boolean_logic import deduce_and_simplify, format_sop_str, format_pos_str
 from .gate_counter import count_gates
 from .kmaps import generate_kmaps
-from .circuit_drawer import generate_or_restore_all_diagrams
+from .circuit_drawer import generate_or_restore_all_diagrams, render_single_diagram
+from .resource_manager import get_system_profile, cleanup_memory
 
-def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=180):
+def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=None, selected_diagrams=None):
     """
     Ejecuta el procesamiento lógico completo:
     1. Deducción booleana analítica y simplificación (SOP y POS).
     2. Conteo de compuertas de 2 entradas para 10 familias de circuitos.
     3. Generación de mapas de Karnaugh con lazos visuales.
-    4. Generación o restauración de los 10 diagramas de circuitos.
+    4. Generación o restauración de los diagramas de circuitos (selectivo según recursos).
     """
     if base_dir is None:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,6 +28,9 @@ def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=180):
         out_dir = os.path.join(base_dir, "static", "generated")
 
     os.makedirs(out_dir, exist_ok=True)
+    profile = get_system_profile()
+    if dpi is None:
+        dpi = profile["dpi"]
 
     # 1. Deducción Analítica Booleana
     deduction = deduce_and_simplify(variables, zeros, ones)
@@ -52,7 +57,7 @@ def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=180):
         dpi=dpi
     )
 
-    # 4. Diagramas de Circuitos (10 familias)
+    # 4. Diagramas de Circuitos (10 familias, filtrados por selected_diagrams si aplica)
     diagramas = generate_or_restore_all_diagrams(
         variables=variables,
         zeros=zeros,
@@ -63,8 +68,11 @@ def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=180):
         pos_clauses=pos_clauses,
         out_dir=out_dir,
         base_dir=base_dir,
-        dpi=dpi
+        dpi=dpi,
+        selected_diagrams=selected_diagrams
     )
+
+    cleanup_memory()
 
     return {
         "num_bits": n_vars,
@@ -79,4 +87,5 @@ def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=180):
         "tabla_conteo": tabla_conteo,
         "kmaps": kmaps,
         "diagramas": diagramas,
+        "profile": profile,
     }

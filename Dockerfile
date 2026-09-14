@@ -25,5 +25,5 @@ RUN mkdir -p /app/static/generated
 # Puerto estándar expuesto por Hugging Face Spaces
 EXPOSE 7860
 
-# Ejecutar con Gunicorn en producción
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "app:app", "--workers", "2", "--threads", "4", "--timeout", "120"]
+# Ejecutar con Gunicorn en producción (optimizado para límites de 512MB de RAM)
+CMD ["gunicorn", "-b", "0.0.0.0:7860", "app:app", "--workers", "1", "--threads", "2", "--max-requests", "100", "--max-requests-jitter", "20", "--timeout", "120"]

@@ -14,6 +14,7 @@ import schemdraw.logic as logic
 import sympy
 
 from .boolean_logic import format_sop_str, format_pos_str
+from .resource_manager import get_system_profile, cleanup_memory
 
 def term_to_pattern(term, vars_list, is_sop=True):
     """
@@ -31,11 +32,14 @@ def term_to_pattern(term, vars_list, is_sop=True):
     return ''.join(lit_map.get(str(v), '.') for v in vars_list)
 
 
-def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir, dpi=180):
+def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir, dpi=None):
     """
-    Genera los mapas de Karnaugh para minitérminos (f') y maxitérminos (f) en out_dir.
+    Genera los mapas de Karnaugh para minitérminos (f) y maxitérminos (f) en out_dir.
     Retorna un diccionario con los nombres de archivos generados.
     """
+    profile = get_system_profile()
+    if dpi is None:
+        dpi = profile["dpi"]
     os.makedirs(out_dir, exist_ok=True)
     n_vars = len(vars_symbols)
     kmaps = {}
@@ -73,6 +77,7 @@ def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir,
                       fontsize=12, fontweight='bold', color='#0D47A1', pad=20)
         plt.savefig(os.path.join(out_dir, 'kmap_miniterminos.png'), bbox_inches='tight', dpi=dpi)
         plt.close(fig1)
+        cleanup_memory()
         kmaps['miniterminos'] = 'kmap_miniterminos.png'
 
         # 2. K-map f (Maxitérminos)
@@ -99,6 +104,7 @@ def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir,
                       fontsize=12, fontweight='bold', color='#B71C1C', pad=20)
         plt.savefig(os.path.join(out_dir, 'kmap_maxiterminos.png'), bbox_inches='tight', dpi=dpi)
         plt.close(fig2)
+        cleanup_memory()
         kmaps['maxiterminos'] = 'kmap_maxiterminos.png'
 
     elif n_vars == 5:
@@ -125,6 +131,7 @@ def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir,
                      fontsize=13, fontweight='bold', color='#0D47A1')
         plt.savefig(os.path.join(out_dir, 'kmap_miniterminos.png'), bbox_inches='tight', dpi=dpi)
         plt.close(fig1)
+        cleanup_memory()
         kmaps['miniterminos'] = 'kmap_miniterminos.png'
 
         # Sub-mapas Maxitérminos f
@@ -147,6 +154,7 @@ def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir,
                      fontsize=13, fontweight='bold', color='#B71C1C')
         plt.savefig(os.path.join(out_dir, 'kmap_maxiterminos.png'), bbox_inches='tight', dpi=dpi)
         plt.close(fig2)
+        cleanup_memory()
         kmaps['maxiterminos'] = 'kmap_maxiterminos.png'
 
     return kmaps

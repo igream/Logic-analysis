@@ -2,6 +2,7 @@
 """
 Módulo de Dibujo y Renderizado de Diagramas Lógicos
 Genera o restaura los 10 diagramas de compuertas lógicas de 2 entradas usando schemdraw.
+Optimizado dinámicamente para entornos de memoria reducida (Render 512MB) y alto rendimiento local.
 """
 
 import os
@@ -18,6 +19,7 @@ from schemdraw.parsing.buchheim import buchheim
 from schemdraw.parsing.logic_parser import LogicTree
 
 from .boolean_logic import format_sop_str, format_pos_str
+from .resource_manager import get_system_profile, cleanup_memory
 from .circuit_trees import (
     build_tree_and_or_not,
     build_tree_nand_direct_sop,
@@ -42,6 +44,7 @@ DIAGRAM_FILENAMES = {
     "sop_nor": "diagrama_SOP_NOR.png",
     "sop_nor_reducido": "diagrama_SOP_NOR_reducido.png",
 }
+
 
 def draw_logic_tree(tree, gateH=1.15, gateW=2.3, outlabel=None):
     """
@@ -105,11 +108,15 @@ def draw_logic_tree(tree, gateH=1.15, gateW=2.3, outlabel=None):
     return drawing
 
 
-def render_diagram_to_file(tree_or_expr, outlabel, title, filepath, figsize=(16, 9), dpi=180):
+def render_diagram_to_file(tree_or_expr, outlabel, title, filepath, figsize=(16, 9), dpi=None):
     """
     Renderiza un árbol de compuertas (LogicTree) o expresión lógica a imagen PNG con schemdraw.
-    Maneja constantes ('0', '1', False, True) y cálculo dinámico de dimensiones.
+    Ajusta dinámicamente el lienzo y el DPI según el perfil de recursos disponible.
     """
+    profile = get_system_profile()
+    if dpi is None:
+        dpi = profile["dpi"]
+
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     try:
         if tree_or_expr is None or str(tree_or_expr) in ['0', 'False']:
@@ -121,6 +128,7 @@ def render_diagram_to_file(tree_or_expr, outlabel, title, filepath, figsize=(16,
             ax.axis('off')
             plt.savefig(filepath, dpi=dpi, bbox_inches='tight')
             plt.close(fig)
+            cleanup_memory()
             return filepath
         elif str(tree_or_expr) in ['1', 'True']:
             fig, ax = plt.subplots(figsize=(8, 3), dpi=dpi)
@@ -131,6 +139,7 @@ def render_diagram_to_file(tree_or_expr, outlabel, title, filepath, figsize=(16,
             ax.axis('off')
             plt.savefig(filepath, dpi=dpi, bbox_inches='tight')
             plt.close(fig)
+            cleanup_memory()
             return filepath
 
         if isinstance(tree_or_expr, LogicTree):
@@ -142,15 +151,17 @@ def render_diagram_to_file(tree_or_expr, outlabel, title, filepath, figsize=(16,
         w = max(1.0, bb.xmax - bb.xmin)
         h = max(1.0, bb.ymax - bb.ymin)
 
-        # Dimensiones dinámicas proporcionales para evitar compresión y asegurar legibilidad
-        fig_w = max(float(figsize[0]), w * 1.35 + 2.5)
-        fig_h = max(float(figsize[1]), h * 1.15 + 2.5)
+        # Dimensiones proporcionales con límite superior según el perfil de memoria
+        raw_w = max(float(figsize[0]), w * 1.35 + 2.5)
+        raw_h = max(float(figsize[1]), h * 1.15 + 2.5)
+        fig_w = min(profile["max_canvas_w"], raw_w)
+        fig_h = min(profile["max_canvas_h"], raw_h)
 
-        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=max(200, dpi))
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
         d.draw(canvas=ax, show=False)
         ax.set_title(title, fontsize=12.5, fontweight='bold', pad=18)
         ax.axis('off')
-        plt.savefig(filepath, dpi=max(200, dpi), bbox_inches='tight')
+        plt.savefig(filepath, dpi=dpi, bbox_inches='tight')
         plt.close(fig)
     except Exception as e:
         print(f"Aviso en renderizado de {filepath}: {e}")
@@ -161,76 +172,130 @@ def render_diagram_to_file(tree_or_expr, outlabel, title, filepath, figsize=(16,
         ax.axis('off')
         plt.savefig(filepath, dpi=dpi, bbox_inches='tight')
         plt.close(fig)
+    finally:
+        cleanup_memory()
+
     return filepath
 
 
-def generate_or_restore_all_diagrams(variables, zeros, ones, reduced_sop, reduced_pos,
-                                     sop_terms, pos_clauses, out_dir, base_dir=None, dpi=180):
+def get_diagram_spec(diagram_id, reduced_sop, reduced_pos, sop_terms, pos_clauses):
     """
-    Genera dinámicamente los 10 diagramas limpios con compuertas estrictas de 2 entradas en out_dir.
+    Retorna la tupla de especificación (builder_fn, outlabel, title, filename, figsize)
+    para un identificador de diagrama dado.
+    """
+    specs = {
+        "sop_and_or_not": (
+            lambda: build_tree_and_or_not(sop_terms, is_sop=True),
+            "F",
+            f"Minitérminos (SOP) - NOT, AND, OR (2 entradas)\nf = {format_sop_str(reduced_sop)}",
+            "diagrama_SOP_AND_OR_NOT.png",
+            (16, 9)
+        ),
+        "pos_and_or_not": (
+            lambda: build_tree_and_or_not(pos_clauses, is_sop=False),
+            "F",
+            f"Maxitérminos (POS) - NOT, AND, OR (2 entradas)\nf = {format_pos_str(reduced_pos)}",
+            "diagrama_POS_AND_OR_NOT.png",
+            (16, 9)
+        ),
+        "sop_nand": (
+            lambda: build_tree_nand_direct_sop(sop_terms),
+            "F",
+            f"SOP Universal NAND Directo (2 entradas)\nf = {format_sop_str(reduced_sop)}",
+            "diagrama_SOP_NAND.png",
+            (18, 10)
+        ),
+        "sop_nand_reducido": (
+            lambda: build_tree_nand_reduced_sop(sop_terms),
+            "F",
+            f"SOP Universal NAND Reducido (Doble Negación)\nf = {format_sop_str(reduced_sop)}",
+            "diagrama_SOP_NAND_reducido.png",
+            (16, 9)
+        ),
+        "pos_nand": (
+            lambda: build_tree_nand_direct_pos(pos_clauses),
+            "F",
+            f"POS Universal NAND Directo (2 entradas)\nf = {format_pos_str(reduced_pos)}",
+            "diagrama_POS_NAND.png",
+            (18, 10)
+        ),
+        "pos_nand_reducido": (
+            lambda: build_tree_nand_reduced_pos(pos_clauses),
+            "F",
+            f"POS Universal NAND Reducido (Doble Negación)\nf = {format_pos_str(reduced_pos)}",
+            "diagrama_POS_NAND_reducido.png",
+            (16, 9)
+        ),
+        "pos_nor": (
+            lambda: build_tree_nor_direct_pos(pos_clauses),
+            "F",
+            f"POS Universal NOR Directo (2 entradas)\nf = {format_pos_str(reduced_pos)}",
+            "diagrama_POS_NOR.png",
+            (18, 10)
+        ),
+        "pos_nor_reducido": (
+            lambda: build_tree_nor_reduced_pos(pos_clauses),
+            "F",
+            f"POS Universal NOR Reducido (Doble Negación)\nf = {format_pos_str(reduced_pos)}",
+            "diagrama_POS_NOR_reducido.png",
+            (16, 9)
+        ),
+        "sop_nor": (
+            lambda: build_tree_nor_direct_sop(sop_terms),
+            "F",
+            f"SOP Universal NOR Directo (2 entradas)\nf = {format_sop_str(reduced_sop)}",
+            "diagrama_SOP_NOR.png",
+            (18, 10)
+        ),
+        "sop_nor_reducido": (
+            lambda: build_tree_nor_reduced_sop(sop_terms),
+            "F",
+            f"SOP Universal NOR Reducido (Doble Negación)\nf = {format_sop_str(reduced_sop)}",
+            "diagrama_SOP_NOR_reducido.png",
+            (16, 9)
+        ),
+    }
+    return specs.get(diagram_id)
+
+
+def render_single_diagram(diagram_id, reduced_sop, reduced_pos, sop_terms, pos_clauses, out_dir, dpi=None):
+    """
+    Renderiza un único diagrama bajo demanda por su identificador.
+    """
+    spec = get_diagram_spec(diagram_id, reduced_sop, reduced_pos, sop_terms, pos_clauses)
+    if not spec:
+        return None
+
+    builder_fn, outlabel, title, filename, figsize = spec
+    filepath = os.path.join(out_dir, filename)
+    tree = builder_fn()
+    render_diagram_to_file(tree, outlabel, title, filepath, figsize=figsize, dpi=dpi)
+    return filename
+
+
+def generate_or_restore_all_diagrams(variables, zeros, ones, reduced_sop, reduced_pos,
+                                     sop_terms, pos_clauses, out_dir, base_dir=None,
+                                     dpi=None, selected_diagrams=None):
+    """
+    Genera dinámicamente diagramas limpios con compuertas de 2 entradas en out_dir.
+    Si selected_diagrams se especifica, solo se renderizan los diagramas seleccionados,
+    optimizando drásticamente el uso de memoria en servidores como Render.
     """
     os.makedirs(out_dir, exist_ok=True)
     if base_dir is None:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    # 1. SOP AND/OR/NOT
-    t1 = build_tree_and_or_not(sop_terms, is_sop=True)
-    render_diagram_to_file(t1, "F",
-                           f"Minitérminos (SOP) - NOT, AND, OR (2 entradas)\nf = {format_sop_str(reduced_sop)}",
-                           os.path.join(out_dir, "diagrama_SOP_AND_OR_NOT.png"), dpi=dpi)
+    target_ids = list(DIAGRAM_FILENAMES.keys()) if not selected_diagrams else [d for d in selected_diagrams if d in DIAGRAM_FILENAMES]
 
-    # 2. POS AND/OR/NOT
-    t2 = build_tree_and_or_not(pos_clauses, is_sop=False)
-    render_diagram_to_file(t2, "F",
-                           f"Maxitérminos (POS) - NOT, AND, OR (2 entradas)\nf = {format_pos_str(reduced_pos)}",
-                           os.path.join(out_dir, "diagrama_POS_AND_OR_NOT.png"), dpi=dpi)
-
-    # 3. SOP NAND Directo
-    t3 = build_tree_nand_direct_sop(sop_terms)
-    render_diagram_to_file(t3, "F",
-                           f"SOP Universal NAND Directo (2 entradas)\nf = {format_sop_str(reduced_sop)}",
-                           os.path.join(out_dir, "diagrama_SOP_NAND.png"), figsize=(18, 10), dpi=dpi)
-
-    # 4. SOP NAND Reducido
-    t4 = build_tree_nand_reduced_sop(sop_terms)
-    render_diagram_to_file(t4, "F",
-                           f"SOP Universal NAND Reducido (Doble Negación)\nf = {format_sop_str(reduced_sop)}",
-                           os.path.join(out_dir, "diagrama_SOP_NAND_reducido.png"), figsize=(16, 9), dpi=dpi)
-
-    # 5. POS NAND Directo
-    t5 = build_tree_nand_direct_pos(pos_clauses)
-    render_diagram_to_file(t5, "F",
-                           f"POS Universal NAND Directo (2 entradas)\nf = {format_pos_str(reduced_pos)}",
-                           os.path.join(out_dir, "diagrama_POS_NAND.png"), figsize=(18, 10), dpi=dpi)
-
-    # 6. POS NAND Reducido
-    t6 = build_tree_nand_reduced_pos(pos_clauses)
-    render_diagram_to_file(t6, "F",
-                           f"POS Universal NAND Reducido (Doble Negación)\nf = {format_pos_str(reduced_pos)}",
-                           os.path.join(out_dir, "diagrama_POS_NAND_reducido.png"), figsize=(16, 9), dpi=dpi)
-
-    # 7. POS NOR Directo
-    t7 = build_tree_nor_direct_pos(pos_clauses)
-    render_diagram_to_file(t7, "F",
-                           f"POS Universal NOR Directo (2 entradas)\nf = {format_pos_str(reduced_pos)}",
-                           os.path.join(out_dir, "diagrama_POS_NOR.png"), figsize=(18, 10), dpi=dpi)
-
-    # 8. POS NOR Reducido
-    t8 = build_tree_nor_reduced_pos(pos_clauses)
-    render_diagram_to_file(t8, "F",
-                           f"POS Universal NOR Reducido (Doble Negación)\nf = {format_pos_str(reduced_pos)}",
-                           os.path.join(out_dir, "diagrama_POS_NOR_reducido.png"), figsize=(16, 9), dpi=dpi)
-
-    # 9. SOP NOR Directo
-    t9 = build_tree_nor_direct_sop(sop_terms)
-    render_diagram_to_file(t9, "F",
-                           f"SOP Universal NOR Directo (2 entradas)\nf = {format_sop_str(reduced_sop)}",
-                           os.path.join(out_dir, "diagrama_SOP_NOR.png"), figsize=(18, 10), dpi=dpi)
-
-    # 10. SOP NOR Reducido
-    t10 = build_tree_nor_reduced_sop(sop_terms)
-    render_diagram_to_file(t10, "F",
-                           f"SOP Universal NOR Reducido (Doble Negación)\nf = {format_sop_str(reduced_sop)}",
-                           os.path.join(out_dir, "diagrama_SOP_NOR_reducido.png"), figsize=(16, 9), dpi=dpi)
+    for diag_id in target_ids:
+        render_single_diagram(
+            diagram_id=diag_id,
+            reduced_sop=reduced_sop,
+            reduced_pos=reduced_pos,
+            sop_terms=sop_terms,
+            pos_clauses=pos_clauses,
+            out_dir=out_dir,
+            dpi=dpi
+        )
 
     return DIAGRAM_FILENAMES

@@ -1,4 +1,4 @@
-﻿__pycache__/
+__pycache__/
 *.py[cod]
 *.class
 .venv/
@@ -7,3 +7,5 @@ venv/
 .idea/
 .vscode/
 Thumbs.db
+scratch/
+static/generated/current_state.json

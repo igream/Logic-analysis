@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Servidor Web Flask para Reductor Lógico y Síntesis de Circuitos.
-Punto de entrada web desacoplado y ligero.
+Punto de entrada web desacoplado, ligero y optimizado dinámicamente para Render (512MB) y local.
 """
 
 import io
 import os
+import json
 import zipfile
 from flask import Flask, render_template, request, jsonify, send_file
 
@@ -21,8 +22,12 @@ except Exception:
 from core import (
     process_logic,
     parse_function_text,
+    deduce_and_simplify,
+    render_single_diagram,
     DEFAULT_CONFIG,
     DIAGRAM_FILENAMES,
+    get_system_profile,
+    cleanup_memory,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +40,12 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/api/profile")
+def api_profile():
+    """Retorna información del perfil de recursos asignado dinámicamente."""
+    return jsonify(get_system_profile())
 
 
 @app.route("/api/process", methods=["POST"])
@@ -55,11 +66,73 @@ def api_process():
             config_text = DEFAULT_CONFIG
         variables, zeros, ones = parse_function_text(config_text)
 
+    # Persistir el estado de la función actual para generación bajo demanda
+    state_path = os.path.join(STATIC_GEN_DIR, "current_state.json")
     try:
-        results = process_logic(variables, zeros, ones, out_dir=STATIC_GEN_DIR, base_dir=BASE_DIR)
+        with open(state_path, "w", encoding="utf-8") as f:
+            json.dump({"variables": variables, "zeros": zeros, "ones": ones}, f)
+    except Exception:
+        pass
+
+    selected_diagrams = data.get("selected_diagrams")
+
+    try:
+        results = process_logic(
+            variables=variables,
+            zeros=zeros,
+            ones=ones,
+            out_dir=STATIC_GEN_DIR,
+            base_dir=BASE_DIR,
+            selected_diagrams=selected_diagrams
+        )
         return jsonify({"success": True, "data": results})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/diagram/<diagram_id>", methods=["GET", "POST"])
+def api_diagram(diagram_id):
+    """
+    Genera o sirve un único diagrama bajo demanda.
+    Permite cargar imágenes perezosamente sin colapsar la memoria de 512MB.
+    """
+    if diagram_id not in DIAGRAM_FILENAMES:
+        return jsonify({"error": "Diagrama no válido"}), 404
+
+    filename = DIAGRAM_FILENAMES[diagram_id]
+    filepath = os.path.join(STATIC_GEN_DIR, filename)
+
+    # Si se solicita con GET y ya existe, servir directamente
+    if request.method == "GET" and os.path.exists(filepath):
+        return send_file(filepath, mimetype="image/png")
+
+    state_path = os.path.join(STATIC_GEN_DIR, "current_state.json")
+    if not os.path.exists(state_path):
+        return jsonify({"error": "No hay función previa procesada"}), 400
+
+    try:
+        with open(state_path, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        variables = state.get("variables", ["A", "B", "C", "D"])
+        zeros = state.get("zeros", [])
+        ones = state.get("ones", [])
+    except Exception as e:
+        return jsonify({"error": f"Error leyendo estado: {e}"}), 500
+
+    try:
+        ded = deduce_and_simplify(variables, zeros, ones)
+        render_single_diagram(
+            diagram_id=diagram_id,
+            reduced_sop=ded["reduced_sop"],
+            reduced_pos=ded["reduced_pos"],
+            sop_terms=ded["sop_terms"],
+            pos_clauses=ded["pos_clauses"],
+            out_dir=STATIC_GEN_DIR
+        )
+        cleanup_memory()
+        return send_file(filepath, mimetype="image/png")
+    except Exception as e:
+        return jsonify({"error": f"Error al generar diagrama: {e}"}), 500
 
 
 @app.route("/api/download_config", methods=["POST"])
@@ -83,24 +156,61 @@ def download_config():
 @app.route("/api/download_zip")
 def download_zip():
     selected = request.args.get("diagrams", "").strip()
-    selected_files = set()
+    target_diag_ids = []
 
     if selected:
         for k in selected.split(","):
             k = k.strip()
             if k in DIAGRAM_FILENAMES:
-                selected_files.add(DIAGRAM_FILENAMES[k])
-            elif k.endswith(".png"):
-                selected_files.add(k)
+                target_diag_ids.append(k)
+    else:
+        target_diag_ids = list(DIAGRAM_FILENAMES.keys())
+
+    # Verificar si falta generar algún diagrama solicitado
+    state_path = os.path.join(STATIC_GEN_DIR, "current_state.json")
+    if os.path.exists(state_path):
+        try:
+            with open(state_path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            variables = state.get("variables", ["A", "B", "C", "D"])
+            zeros = state.get("zeros", [])
+            ones = state.get("ones", [])
+            ded = None
+
+            for did in target_diag_ids:
+                fname = DIAGRAM_FILENAMES[did]
+                fpath = os.path.join(STATIC_GEN_DIR, fname)
+                if not os.path.exists(fpath):
+                    if ded is None:
+                        ded = deduce_and_simplify(variables, zeros, ones)
+                    render_single_diagram(
+                        diagram_id=did,
+                        reduced_sop=ded["reduced_sop"],
+                        reduced_pos=ded["reduced_pos"],
+                        sop_terms=ded["sop_terms"],
+                        pos_clauses=ded["pos_clauses"],
+                        out_dir=STATIC_GEN_DIR
+                    )
+                    cleanup_memory()
+        except Exception as e:
+            print(f"Aviso en generación bajo demanda para ZIP: {e}")
 
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         if os.path.exists(STATIC_GEN_DIR):
-            for fname in os.listdir(STATIC_GEN_DIR):
-                if fname.endswith(".png"):
-                    if not selected_files or fname in selected_files or fname.startswith("kmap_"):
-                        fpath = os.path.join(STATIC_GEN_DIR, fname)
+            for did in target_diag_ids:
+                fname = DIAGRAM_FILENAMES.get(did)
+                if fname:
+                    fpath = os.path.join(STATIC_GEN_DIR, fname)
+                    if os.path.exists(fpath):
                         zf.write(fpath, arcname=f"Resultados/{fname}")
+
+            # Incluir mapas de Karnaugh generados
+            for kmap_file in ["kmap_miniterminos.png", "kmap_maxiterminos.png"]:
+                kpath = os.path.join(STATIC_GEN_DIR, kmap_file)
+                if os.path.exists(kpath):
+                    zf.write(kpath, arcname=f"Resultados/{kmap_file}")
+
         zf.writestr("funcion_ejemplo.txt", DEFAULT_CONFIG)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="Resultados_Logic_Analysis.zip", mimetype="application/zip")
@@ -118,5 +228,7 @@ if __name__ == "__main__":
     is_hf = "SPACE_ID" in os.environ
     default_port = 7860 if is_hf else 5000
     port = int(os.environ.get("PORT", default_port))
+    profile = get_system_profile()
     print(f"Iniciando Servidor Web Logic Analysis en http://localhost:{port}")
+    print(f"Modo de recursos activo: {profile['mode']} (DPI: {profile['dpi']}, GC agresivo: {profile['aggressive_gc']})")
     app.run(host="0.0.0.0", port=port, debug=False)

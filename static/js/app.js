@@ -287,7 +287,8 @@ async function processCurrentTable() {
         num_bits: currentBits,
         variables: activeVars,
         zeros: zeros,
-        ones: ones
+        ones: ones,
+        selected_diagrams: getSelectedDiagrams()
       })
     });
 
@@ -345,11 +346,11 @@ async function processCurrentTable() {
       if (card) {
         const img = card.querySelector('img');
         if (img) {
-          img.src = '/static/generated/' + r.archivo + '?t=' + timestamp;
+          img.src = '/api/diagram/' + r.id + '?t=' + timestamp;
         }
         const dl = card.querySelector('a[download]');
         if (dl) {
-          dl.href = '/static/generated/' + r.archivo + '?t=' + timestamp;
+          dl.href = '/api/diagram/' + r.id + '?t=' + timestamp;
         }
         const p = card.querySelector('p');
         if (p) {
