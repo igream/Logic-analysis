@@ -1,9 +1,14 @@
 ﻿# -*- coding: utf-8 -*-
 """
 Servidor Web Flask para Reductor Lógico y Síntesis de Circuitos
-Permite introducir la función en texto o cargar un archivo .txt,
-procesa la reducción booleana, genera mapas K y diagramas con compuertas de 2 entradas,
-y permite la descarga individual o en paquete ZIP.
+Permite:
+- Selección interactiva de número de bits (2 a 5 bits)
+- Tabla de verdad interactiva para alternar salidas 0 / 1 fila por fila
+- Carga y descarga de archivos de configuración (.txt)
+- Deducción analítica y reducción booleana
+- Mapas de Karnaugh de 2 a 5 variables
+- Síntesis de circuitos lógicos con compuertas de 2 entradas
+- Descarga individual en PNG y masiva en ZIP
 """
 
 import sys
@@ -14,7 +19,7 @@ import json
 import zipfile
 import shutil
 import matplotlib
-matplotlib.use('Agg')  # Modo no interactivo para servidor
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import schemdraw
@@ -22,7 +27,7 @@ import schemdraw.logic as logic
 from schemdraw.parsing import logicparse
 import sympy
 from sympy.logic.boolalg import simplify_logic
-from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_file
 
 app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,22 +37,15 @@ os.makedirs(STATIC_GEN_DIR, exist_ok=True)
 DEFAULT_CONFIG = """# ==============================================================================
 # CONFIGURACIÓN DE LA FUNCIÓN LÓGICA (Reductor)
 # ==============================================================================
-# Ingrese las variables y las salidas de la función.
-# Formatos soportados:
-#   f = (0, 1, 2, 5, 6, 7, 11, 15)          # Salidas en 0 (Maxitérminos)
-#   salidas_en_0 = 0, 1, 2, 5, 6, 7, 11, 15
-#   f' = (3, 4, 8, 9, 10, 12, 13, 14)       # Salidas en 1 (Minitérminos)
-#   variables = A, B, C, D
-# ==============================================================================
-
 variables = A, B, C, D
-f = (0, 1, 2, 5, 6, 7, 11, 15)
+f = (0, 1, 2, 5, 6, 7, 11, 15)  # salidas en 0 (Maxitérminos)
 """
 
 def parse_function_text(text):
     variables = None
     zeros = None
     ones = None
+    num_bits = None
     
     for line in text.splitlines():
         line = line.strip()
@@ -61,6 +59,8 @@ def parse_function_text(text):
             kl = k.lower()
             if kl in ['variables', 'vars', 'var']:
                 variables = [x.strip().upper() for x in re.split(r'[,; ]+', v) if x.strip().isalnum()]
+            elif kl in ['bits', 'num_bits', 'n_bits']:
+                num_bits = int(v)
             elif kl in ['f', 'salidas_en_0', 'salidas_0', 'ceros', 'maxiterminos', 'maxterms']:
                 nums = [int(x) for x in re.findall(r'\b\d+\b', v)]
                 zeros = sorted(list(set(nums)))
@@ -69,12 +69,14 @@ def parse_function_text(text):
                 ones = sorted(list(set(nums)))
                 
     max_idx = max((zeros or [0]) + (ones or [0]))
-    req_bits = max(2, max_idx.bit_length()) if max_idx > 0 else 2
+    req_bits = num_bits or (len(variables) if variables else max(2, max_idx.bit_length()))
+    req_bits = min(5, max(2, req_bits))
     
     if variables is None:
-        default_names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        default_names = ['A', 'B', 'C', 'D', 'E']
         variables = default_names[:req_bits]
     else:
+        variables = variables[:req_bits]
         req_bits = len(variables)
         
     total_states = 2 ** req_bits
@@ -83,7 +85,7 @@ def parse_function_text(text):
     elif ones is not None and zeros is None:
         zeros = sorted([i for i in range(total_states) if i not in ones])
     elif zeros is None and ones is None:
-        zeros = [0, 1, 2, 5, 6, 7, 11, 15]
+        zeros = [0, 1, 2, 5, 6, 7, 11, 15] if req_bits == 4 else [0]
         ones = sorted([i for i in range(total_states) if i not in zeros])
         
     return variables, zeros, ones
@@ -159,14 +161,13 @@ def render_diagram_to_file(expr_str, outlabel, title, filename, figsize=(16, 9))
     d = logicparse(expr_str, outlabel=outlabel)
     fig, ax = plt.subplots(figsize=figsize, dpi=180)
     d.draw(canvas=ax, show=False)
-    ax.set_title(title, fontsize=12.5, fontweight='bold', pad=20)
+    ax.set_title(title, fontsize=12, fontweight='bold', pad=18)
     ax.axis('off')
     plt.savefig(filepath, dpi=180, bbox_inches='tight')
     plt.close(fig)
     return filepath
 
-def process_logic(config_text):
-    variables, zeros, ones = parse_function_text(config_text)
+def process_logic(variables, zeros, ones):
     vars_symbols = [sympy.Symbol(v) for v in variables]
     n_vars = len(vars_symbols)
     
@@ -199,7 +200,7 @@ def process_logic(config_text):
     sop_terms = extract_terms(reduced_sop, is_sop=True)
     pos_clauses = extract_terms(reduced_pos, is_sop=False)
     
-    # 2. Conteo Analítico de Compuertas
+    # 2. Conteo Analítico de Compuertas de 2 entradas
     n_not_sop = len({str(l.args[0]) for t in sop_terms for l in t if isinstance(l, sympy.Not)})
     n_and_sop = sum(len(t) - 1 for t in sop_terms)
     n_or_sop = len(sop_terms) - 1
@@ -222,7 +223,7 @@ def process_logic(config_text):
     nor_sop_dir = n_not_sop + 3 * n_and_sop + 2 * n_or_sop
     nor_sop_red = max(0, nor_sop_dir - 2 * sum(1 for t in sop_terms for l in t if isinstance(l, sympy.Not)))
 
-    # Ajuste preciso para la función base del proyecto
+    # Ajuste para la función base del proyecto
     if zeros == [0, 1, 2, 5, 6, 7, 11, 15] and variables == ['A', 'B', 'C', 'D']:
         nand_pos_red = 22
         nor_sop_red = 22
@@ -242,11 +243,11 @@ def process_logic(config_text):
 
     # 3. Generar Mapas de Karnaugh
     kmaps = {}
+    colors = ['#D32F2F', '#1976D2', '#388E3C', '#E65100', '#7B1FA2', '#0097A7', '#C2185B', '#FBC02D']
+    fills = ['#FFCDD266', '#BBDEFB66', '#C8E6C966', '#FFE0B266', '#E1BEE766', '#B2EBF266', '#F8BBD066', '#FFF9C466']
+
     if n_vars in [2, 3, 4]:
         var_str = ''.join(str(v) for v in vars_symbols)
-        colors = ['#D32F2F', '#1976D2', '#388E3C', '#E65100', '#7B1FA2', '#0097A7', '#C2185B', '#FBC02D']
-        fills = ['#FFCDD266', '#BBDEFB66', '#C8E6C966', '#FFE0B266', '#E1BEE766', '#B2EBF266', '#F8BBD066', '#FFF9C466']
-
         # K-map f'
         tt_fprime = [(f"{i:0{n_vars}b}", '1' if i in zeros else '0') for i in range(2**n_vars)]
         groups_fprime = {}
@@ -299,9 +300,51 @@ def process_logic(config_text):
         plt.close(fig2)
         kmaps['maxiterminos'] = 'kmap_maxiterminos.png'
 
+    elif n_vars == 5:
+        # 5 Variables: Dos sub-mapas de 4 variables lado a lado (A=0 y A=1)
+        fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7.5), dpi=180)
+        # Sub-mapa 1: V0 = 0 (índices 0 a 15)
+        tt1 = [(f"{i:04b}", '1' if i in zeros else '0') for i in range(16)]
+        d1 = schemdraw.Drawing()
+        d1.add(logic.Kmap(names='BCDE', truthtable=tt1))
+        d1.draw(show=False, canvas=ax1)
+        ax1.axis('off')
+        ax1.set_title(f'Sub-mapa {variables[0]} = 0', fontsize=12, fontweight='bold')
+        
+        # Sub-mapa 2: V0 = 1 (índices 16 a 31)
+        tt2 = [(f"{i:04b}", '1' if (i + 16) in zeros else '0') for i in range(16)]
+        d2 = schemdraw.Drawing()
+        d2.add(logic.Kmap(names='BCDE', truthtable=tt2))
+        d2.draw(show=False, canvas=ax2)
+        ax2.axis('off')
+        ax2.set_title(f'Sub-mapa {variables[0]} = 1', fontsize=12, fontweight='bold')
+        
+        plt.suptitle(f"Mapa de Karnaugh de 5 Variables - Minitérminos (f')\nf' = {format_sop_str(reduced_sop)}", fontsize=13, fontweight='bold', color='#0D47A1')
+        plt.savefig(os.path.join(STATIC_GEN_DIR, 'kmap_miniterminos.png'), bbox_inches='tight', dpi=180)
+        plt.close(fig1)
+        kmaps['miniterminos'] = 'kmap_miniterminos.png'
+
+        fig2, (ax3, ax4) = plt.subplots(1, 2, figsize=(14, 7.5), dpi=180)
+        tt3 = [(f"{i:04b}", '0' if i in zeros else '1') for i in range(16)]
+        d3 = schemdraw.Drawing()
+        d3.add(logic.Kmap(names='BCDE', truthtable=tt3))
+        d3.draw(show=False, canvas=ax3)
+        ax3.axis('off')
+        ax3.set_title(f'Sub-mapa {variables[0]} = 0', fontsize=12, fontweight='bold')
+        
+        tt4 = [(f"{i:04b}", '0' if (i + 16) in zeros else '1') for i in range(16)]
+        d4 = schemdraw.Drawing()
+        d4.add(logic.Kmap(names='BCDE', truthtable=tt4))
+        d4.draw(show=False, canvas=ax4)
+        ax4.axis('off')
+        ax4.set_title(f'Sub-mapa {variables[0]} = 1', fontsize=12, fontweight='bold')
+        
+        plt.suptitle(f"Mapa de Karnaugh de 5 Variables - Maxitérminos (f)\nf = {format_pos_str(reduced_pos)}", fontsize=13, fontweight='bold', color='#B71C1C')
+        plt.savefig(os.path.join(STATIC_GEN_DIR, 'kmap_maxiterminos.png'), bbox_inches='tight', dpi=180)
+        plt.close(fig2)
+        kmaps['maxiterminos'] = 'kmap_maxiterminos.png'
+
     # 4. Diagramas de Circuitos
-    # Si coincide con la función del proyecto, los diagramas manuales de alta precisión ya existen en static/generated/
-    # Si es una función distinta, renderizamos los diagramas correspondientes
     if not (zeros == [0, 1, 2, 5, 6, 7, 11, 15] and variables == ['A', 'B', 'C', 'D']):
         tree_sop = build_tree_and_or_not(sop_terms, is_sop=True)
         render_diagram_to_file(tree_sop, "F'",
@@ -313,6 +356,7 @@ def process_logic(config_text):
                                "diagrama_POS_AND_OR_NOT.png")
 
     results = {
+        "num_bits": n_vars,
         "variables": variables,
         "zeros": zeros,
         "ones": ones,
@@ -341,18 +385,27 @@ def process_logic(config_text):
 def index():
     return render_template("index.html")
 
-@app.route("/api/default_config")
-def get_default_config():
-    return jsonify({"config_text": DEFAULT_CONFIG})
-
 @app.route("/api/process", methods=["POST"])
 def api_process():
     data = request.get_json(silent=True) or {}
-    config_text = data.get("config_text", "").strip()
-    if not config_text:
-        config_text = DEFAULT_CONFIG
+    
+    # Puede recibir config_text o directamente variables, zeros, ones
+    if "zeros" in data and "num_bits" in data:
+        num_bits = int(data.get("num_bits", 4))
+        num_bits = min(5, max(2, num_bits))
+        default_vars = ['A', 'B', 'C', 'D', 'E'][:num_bits]
+        variables = data.get("variables", default_vars)[:num_bits]
+        zeros = sorted(list(set(data.get("zeros", []))))
+        total = 2 ** num_bits
+        ones = sorted([i for i in range(total) if i not in zeros])
+    else:
+        config_text = data.get("config_text", "").strip()
+        if not config_text:
+            config_text = DEFAULT_CONFIG
+        variables, zeros, ones = parse_function_text(config_text)
+        
     try:
-        results = process_logic(config_text)
+        results = process_logic(variables, zeros, ones)
         return jsonify({"success": True, "data": results})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
@@ -360,7 +413,15 @@ def api_process():
 @app.route("/api/download_config", methods=["POST"])
 def download_config():
     data = request.get_json(silent=True) or {}
-    text = data.get("config_text", DEFAULT_CONFIG)
+    variables = data.get("variables", ["A", "B", "C", "D"])
+    zeros = data.get("zeros", [0, 1, 2, 5, 6, 7, 11, 15])
+    
+    text = f"# ==============================================================================\n"
+    text += f"# CONFIGURACIÓN GENERADA DESDE LA TABLA DE VERDAD (Logic-Analisis)\n"
+    text += f"# ==============================================================================\n"
+    text += f"variables = {', '.join(variables)}\n"
+    text += f"f = ({', '.join(str(x) for x in zeros)})  # Salidas en 0 (Maxitérminos)\n"
+    
     buffer = io.BytesIO()
     buffer.write(text.encode("utf-8"))
     buffer.seek(0)
@@ -370,12 +431,10 @@ def download_config():
 def download_zip():
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        # Añadir todos los diagramas y mapas K generados
         for fname in os.listdir(STATIC_GEN_DIR):
             if fname.endswith(".png"):
                 fpath = os.path.join(STATIC_GEN_DIR, fname)
                 zf.write(fpath, arcname=f"Resultados/{fname}")
-        # Añadir archivo de configuración de referencia
         zf.writestr("funcion_ejemplo.txt", DEFAULT_CONFIG)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="Resultados_Logic_Analisis.zip", mimetype="application/zip")

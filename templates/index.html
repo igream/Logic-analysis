@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logic-Analisis | Reductor Booleano y Síntesis de Circuitos</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script>
     tailwind.config = {
@@ -14,31 +12,22 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              800: '#3730a3',
-              900: '#312e81',
-            }
+            brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81' }
           }
         }
       }
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    pre, code, textarea { font-family: 'JetBrains Mono', monospace; }
-    .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+    pre, code, .font-mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
   <!-- Header -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
@@ -52,7 +41,7 @@
       <div class="flex items-center space-x-3">
         <a href="https://github.com/igream/Logic-Analisis" target="_blank" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
           <i class="fa-brands fa-github text-sm"></i>
-          <span>Repositorio</span>
+          <span>GitHub</span>
         </a>
         <a href="/api/download_zip" class="inline-flex items-center space-x-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
           <i class="fa-solid fa-file-zipper"></i>
@@ -65,67 +54,87 @@
   <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-    <!-- Hero / Input Section -->
-    <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-100">
+    <!-- Configuración Interactiva (Bits y Tabla) -->
+    <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+      
+      <!-- Paso 1: Pregunta de Bits -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
-          <h2 class="text-xl font-bold text-slate-900 flex items-center space-x-2">
-            <span>Definición de la Función Booleana</span>
-            <span class="text-xs bg-brand-50 text-brand-700 font-semibold px-2.5 py-0.5 rounded-full border border-brand-200">4 bits / 2 entradas</span>
-          </h2>
-          <p class="text-sm text-slate-500 mt-1">Escribe la función directamente o sube un archivo de texto <code class="bg-slate-100 px-1 py-0.5 rounded text-brand-700 text-xs">.txt</code> con tus términos.</p>
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-sm">1</span>
+            <h2 class="text-lg font-bold text-slate-900">¿Cuántos bits manejas?</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 pl-9">Selecciona la cantidad de bits de entrada (máximo 5 bits):</p>
         </div>
-        <!-- Tool Buttons -->
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- File input hidden -->
-          <input type="file" id="fileInput" accept=".txt" class="hidden" onchange="handleFileUpload(event)">
-          <button onclick="document.getElementById('fileInput').click()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
-            <i class="fa-solid fa-upload text-slate-500"></i>
-            <span>Cargar Archivo (.txt)</span>
+
+        <div class="flex flex-wrap items-center gap-2 pl-9 sm:pl-0">
+          <button onclick="setNumBits(2)" id="btnBit2" class="bit-btn px-4 py-2 text-xs font-bold rounded-xl border transition">
+            2 Bits <span class="font-normal text-[11px] block opacity-80">(4 filas)</span>
           </button>
-          <button onclick="downloadCurrentConfig()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
-            <i class="fa-solid fa-download text-slate-500"></i>
-            <span>Descargar Función (.txt)</span>
+          <button onclick="setNumBits(3)" id="btnBit3" class="bit-btn px-4 py-2 text-xs font-bold rounded-xl border transition">
+            3 Bits <span class="font-normal text-[11px] block opacity-80">(8 filas)</span>
           </button>
-          <button onclick="loadDefaultConfig()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
-            <i class="fa-solid fa-arrow-rotate-left text-slate-500"></i>
-            <span>Ejemplo Defecto</span>
+          <button onclick="setNumBits(4)" id="btnBit4" class="bit-btn px-4 py-2 text-xs font-bold rounded-xl border transition">
+            4 Bits <span class="font-normal text-[11px] block opacity-80">(16 filas)</span>
+          </button>
+          <button onclick="setNumBits(5)" id="btnBit5" class="bit-btn px-4 py-2 text-xs font-bold rounded-xl border transition">
+            5 Bits <span class="font-normal text-[11px] block opacity-80">(32 filas)</span>
           </button>
         </div>
       </div>
+      <!-- Paso 2: Tabla de Verdad Interactiva con Columna de la Función -->
+      <div class="space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-sm">2</span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Tabla de Verdad Interactiva</h3>
+              <p class="text-xs text-slate-500">Haz clic en cada botón de la columna <b class="text-slate-700">Salida f</b> para alternar entre <span class="text-rose-600 font-bold">0</span> y <span class="text-emerald-600 font-bold">1</span>.</p>
+            </div>
+          </div>
 
-      <!-- Editor & Actions -->
-      <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-2">
-          <label for="configEditor" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-            Editor de Configuración
-          </label>
-          <div class="relative">
-            <textarea id="configEditor" rows="7" class="w-full bg-slate-900 text-emerald-400 font-mono text-sm rounded-xl p-4 border border-slate-800 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 shadow-inner resize-y transition" placeholder="# Escribe tus variables y salidas aquí..."></textarea>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <button onclick="setAllValues(0)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Todo 0</button>
+            <button onclick="setAllValues(1)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Todo 1</button>
+            <button onclick="invertAllValues()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">Invertir</button>
+            <button onclick="loadDefaultProblem()" class="px-2.5 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-lg border border-brand-200 transition">Ejemplo f=(0,1,2,5,6,7,11,15)</button>
+            
+            <input type="file" id="fileUpload" accept=".txt" class="hidden" onchange="handleFileSelected(event)">
+            <button onclick="document.getElementById('fileUpload').click()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-sm flex items-center space-x-1.5 transition">
+              <i class="fa-solid fa-upload"></i>
+              <span>Cargar Archivo (.txt)</span>
+            </button>
+            <button onclick="downloadConfigFile()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-sm flex items-center space-x-1.5 transition">
+              <i class="fa-solid fa-download"></i>
+              <span>Descargar Configuración (.txt)</span>
+            </button>
           </div>
         </div>
 
-        <div class="flex flex-col justify-between space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs text-slate-600">
-          <div>
-            <span class="font-bold text-slate-800 flex items-center space-x-1.5 mb-2">
-              <i class="fa-solid fa-circle-info text-brand-600"></i>
-              <span>Formatos de Entrada Válidos</span>
-            </span>
-            <ul class="space-y-1.5 list-disc list-inside">
-              <li><b class="text-slate-800">Por Ceros (Maxitérminos):</b><br><code class="text-brand-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 inline-block mt-0.5">f = (0, 1, 2, 5, 6, 7, 11, 15)</code></li>
-              <li><b class="text-slate-800">Por Unos (Minitérminos):</b><br><code class="text-brand-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 inline-block mt-0.5">salidas_en_1 = 3, 4, 8, 9, 10, 12, 13, 14</code></li>
-              <li><b class="text-slate-800">Variables:</b> <code class="text-brand-700 bg-white px-1.5 py-0.5 rounded border border-slate-200">variables = A, B, C, D</code></li>
-            </ul>
+        <div class="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium">
+          <div class="flex items-center space-x-4">
+            <span class="text-slate-600">Variables activas: <b id="lblVars" class="text-slate-900 font-mono">A, B, C, D</b></span>
+            <span class="text-slate-400">|</span>
+            <span class="text-rose-700"><i class="fa-solid fa-circle text-[9px] mr-1"></i>Salidas en 0 (Maxitérminos): <b id="cntZeros">8</b></span>
+            <span class="text-slate-400">|</span>
+            <span class="text-emerald-700"><i class="fa-solid fa-circle text-[9px] mr-1"></i>Salidas en 1 (Minitérminos): <b id="cntOnes">8</b></span>
           </div>
-          <button id="btnProcess" onclick="processFunction()" class="w-full py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 hover:shadow-brand-500/30 flex items-center justify-center space-x-2 transition">
+          <span class="text-slate-400 font-mono" id="lblTotalRows">16 combinaciones</span>
+        </div>
+
+        <div id="truthTableContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </div>
+
+        <div class="pt-4 flex justify-end">
+          <button id="btnProcess" onclick="processCurrentTable()" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center space-x-2 transition">
             <i class="fa-solid fa-bolt"></i>
-            <span>Procesar y Generar Circuitos</span>
+            <span>Procesar Función y Generar Diagramas</span>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- Results Container -->
+    <!-- Resultados Generados -->
     <div id="resultsSection" class="space-y-8">
       
       <!-- 1. Expresiones Lógicas -->
@@ -135,17 +144,14 @@
           <span>1. Expresiones Lógicas Obtenidas</span>
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <!-- Unreduced SOP -->
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
             <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Minitérminos No Reducida (f')</span>
             <div id="unreducedSop" class="font-mono text-xs text-slate-800 break-words bg-white p-3 rounded-lg border border-slate-200">...</div>
           </div>
-          <!-- Unreduced POS -->
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
             <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Maxitérminos No Reducida (f)</span>
             <div id="unreducedPos" class="font-mono text-xs text-slate-800 break-words bg-white p-3 rounded-lg border border-slate-200">...</div>
           </div>
-          <!-- Reduced SOP -->
           <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200">
             <div class="flex items-center justify-between mb-1">
               <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">Minitérminos Reducida (f' - SOP)</span>
@@ -153,7 +159,6 @@
             </div>
             <div id="reducedSop" class="font-mono text-sm font-bold text-brand-900 break-words bg-white p-3 rounded-lg border border-indigo-200">...</div>
           </div>
-          <!-- Reduced POS -->
           <div class="p-4 rounded-xl bg-rose-50/50 border border-rose-200">
             <div class="flex items-center justify-between mb-1">
               <span class="text-xs font-bold text-rose-800 uppercase tracking-wider">Maxitérminos Reducida (f - POS)</span>
@@ -163,7 +168,6 @@
           </div>
         </div>
       </section>
-
       <!-- 2. Mapas de Karnaugh -->
       <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -190,7 +194,7 @@
         </div>
       </section>
 
-      <!-- 3. Diagramas de Circuitos (Compuertas de 2 Entradas) -->
+      <!-- 3. Diagramas de Circuitos -->
       <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
@@ -198,9 +202,8 @@
               <i class="fa-solid fa-diagram-project text-brand-600"></i>
               <span>3. Diagramas Lógicos con Compuertas de 2 Entradas</span>
             </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Símbolos distintivos ANSI/IEEE Std 91-1984 y orientación uniforme.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Símbolos ANSI/IEEE Std 91-1984 y estricta limitación a compuertas de 2 entradas.</p>
           </div>
-          <!-- Circuit Tabs -->
           <div class="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
             <button onclick="switchCircuitFamily('and_or')" id="tab_and_or" class="px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition">AND / OR / NOT</button>
             <button onclick="switchCircuitFamily('nand')" id="tab_nand" class="px-3 py-1.5 font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">Universal NAND</button>
@@ -208,8 +211,6 @@
           </div>
         </div>
 
-        <!-- Circuit Galleries -->
-        <!-- AND / OR / NOT -->
         <div id="gallery_and_or" class="grid grid-cols-1 gap-6">
           <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
@@ -238,7 +239,6 @@
           </div>
         </div>
 
-        <!-- NAND Universal -->
         <div id="gallery_nand" class="hidden grid grid-cols-1 gap-6">
           <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
@@ -299,7 +299,6 @@
           </div>
         </div>
 
-        <!-- NOR Universal -->
         <div id="gallery_nor" class="hidden grid grid-cols-1 gap-6">
           <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex items-center justify-between mb-3">
@@ -393,7 +392,6 @@
               </tr>
             </thead>
             <tbody id="tableBody" class="divide-y divide-slate-100 font-medium text-slate-600">
-              <!-- Se rellena dinámicamente -->
             </tbody>
           </table>
         </div>
@@ -402,14 +400,331 @@
     </div>
   </main>
 
-  <!-- Footer -->
   <footer class="mt-auto bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-    <p>Proyecto de Reducción Booleana y Síntesis Lógica | Desarrollado para Análisis de Circuitos Digitales</p>
+    <p>Logic-Analisis | Reducción Booleana, Mapas de Karnaugh y Compuertas de 2 Entradas</p>
   </footer>
-
-  <!-- Scripts -->
+  <!-- LÓGICA JAVASCRIPT -->
   <script>
+    let currentBits = 4;
+    const varNamesPool = ['A', 'B', 'C', 'D', 'E'];
+    let rowValues = {};
     let currentKmapTab = 'min';
+
+    function setNumBits(n) {
+      if (n < 2 || n > 5) return;
+      currentBits = n;
+      
+      for (let b = 2; b <= 5; b++) {
+        const btn = document.getElementById('btnBit' + b);
+        if (btn) {
+          if (b === n) {
+            btn.className = 'bit-btn px-4 py-2 text-xs font-bold rounded-xl border bg-brand-600 border-brand-600 text-white shadow-md shadow-brand-500/20 transition';
+          } else {
+            btn.className = 'bit-btn px-4 py-2 text-xs font-bold rounded-xl border bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 transition';
+          }
+        }
+      }
+
+      const total = 2 ** n;
+      const defaultZeros = [0, 1, 2, 5, 6, 7, 11, 15];
+      rowValues = {};
+      for (let i = 0; i < total; i++) {
+        rowValues[i] = (n === 4 && defaultZeros.includes(i)) ? 0 : (i === 0 ? 0 : 1);
+      }
+
+      renderTruthTable();
+      updateLabels();
+    }
+
+    function toggleRowValue(idx) {
+      rowValues[idx] = rowValues[idx] === 0 ? 1 : 0;
+      updateRowButton(idx);
+      updateLabels();
+    }
+
+    function updateRowButton(idx) {
+      const btn = document.getElementById('rowBtn_' + idx);
+      if (!btn) return;
+      const val = rowValues[idx];
+      if (val === 0) {
+        btn.className = 'w-full py-1.5 px-3 rounded-lg font-mono font-bold text-xs bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 flex items-center justify-between shadow-xs transition';
+        btn.innerHTML = `<span>0</span><span class="text-[10px] font-semibold text-rose-600 uppercase">Maxitérmino (0)</span>`;
+      } else {
+        btn.className = 'w-full py-1.5 px-3 rounded-lg font-mono font-bold text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 flex items-center justify-between shadow-xs transition';
+        btn.innerHTML = `<span>1</span><span class="text-[10px] font-semibold text-emerald-600 uppercase">Minitérmino (1)</span>`;
+      }
+    }
+
+    function renderTruthTable() {
+      const container = document.getElementById('truthTableContainer');
+      container.innerHTML = '';
+
+      const totalRows = 2 ** currentBits;
+      const activeVars = varNamesPool.slice(0, currentBits);
+
+      const half = Math.ceil(totalRows / 2);
+      const parts = [
+        { start: 0, end: half },
+        { start: half, end: totalRows }
+      ];
+
+      parts.forEach((part) => {
+        const tableCard = document.createElement('div');
+        tableCard.className = 'overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs';
+
+        let tableHtml = `
+          <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+            <thead class="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <tr>
+                <th class="py-2.5 px-3 text-center">#</th>
+                ${activeVars.map(v => `<th class="py-2.5 px-2 text-center font-mono text-slate-800">${v}</th>`).join('')}
+                <th class="py-2.5 px-3 text-center font-bold text-slate-900 bg-slate-200/60">Salida f</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-mono">
+        `;
+
+        for (let i = part.start; i < part.end; i++) {
+          const binStr = i.toString(2).padStart(currentBits, '0');
+          const bits = binStr.split('');
+
+          tableHtml += `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-1.5 px-3 text-center font-semibold text-slate-500 text-[11px]">m${i}</td>
+              ${bits.map(b => `<td class="py-1.5 px-2 text-center text-slate-600">${b}</td>`).join('')}
+              <td class="py-1 px-3 text-center">
+                <button type="button" id="rowBtn_${i}" onclick="toggleRowValue(${i})">
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+
+        tableHtml += `
+            </tbody>
+          </table>
+        `;
+
+        tableCard.innerHTML = tableHtml;
+        container.appendChild(tableCard);
+
+        for (let i = part.start; i < part.end; i++) {
+          updateRowButton(i);
+        }
+      });
+    }
+
+    function updateLabels() {
+      const activeVars = varNamesPool.slice(0, currentBits);
+      document.getElementById('lblVars').innerText = activeVars.join(', ');
+
+      const totalRows = 2 ** currentBits;
+      document.getElementById('lblTotalRows').innerText = `${totalRows} combinaciones`;
+
+      let zeros = 0;
+      let ones = 0;
+      for (let i = 0; i < totalRows; i++) {
+        if (rowValues[i] === 0) zeros++;
+        else ones++;
+      }
+      document.getElementById('cntZeros').innerText = zeros;
+      document.getElementById('cntOnes').innerText = ones;
+    }
+
+    function setAllValues(val) {
+      const total = 2 ** currentBits;
+      for (let i = 0; i < total; i++) {
+        rowValues[i] = val;
+        updateRowButton(i);
+      }
+      updateLabels();
+    }
+
+    function invertAllValues() {
+      const total = 2 ** currentBits;
+      for (let i = 0; i < total; i++) {
+        rowValues[i] = rowValues[i] === 0 ? 1 : 0;
+        updateRowButton(i);
+      }
+      updateLabels();
+    }
+
+    function loadDefaultProblem() {
+      setNumBits(4);
+      const defaultZeros = [0, 1, 2, 5, 6, 7, 11, 15];
+      for (let i = 0; i < 16; i++) {
+        rowValues[i] = defaultZeros.includes(i) ? 0 : 1;
+        updateRowButton(i);
+      }
+      updateLabels();
+      processCurrentTable();
+    }
+
+    async function processCurrentTable() {
+      const btn = document.getElementById('btnProcess');
+      const origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Procesando función...</span>';
+
+      const total = 2 ** currentBits;
+      const zeros = [];
+      const ones = [];
+      for (let i = 0; i < total; i++) {
+        if (rowValues[i] === 0) zeros.push(i);
+        else ones.push(i);
+      }
+
+      const activeVars = varNamesPool.slice(0, currentBits);
+
+      try {
+        const response = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            num_bits: currentBits,
+            variables: activeVars,
+            zeros: zeros,
+            ones: ones
+          })
+        });
+
+        const json = await response.json();
+        if (!json.success) {
+          alert('Error al procesar: ' + json.error);
+          return;
+        }
+
+        const d = json.data;
+        document.getElementById('unreducedSop').innerText = d.unreduced_sop || '0';
+        document.getElementById('unreducedPos').innerText = d.unreduced_pos || '1';
+        document.getElementById('reducedSop').innerText = d.reduced_sop || '0';
+        document.getElementById('reducedPos').innerText = d.reduced_pos || '1';
+
+        switchKmapTab(currentKmapTab);
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        d.tabla_conteo.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition';
+          tr.innerHTML = `
+            <td class="px-4 py-2.5 font-bold text-slate-700">${r.num}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${r.nombre}</td>
+            <td class="px-4 py-2.5 text-xs text-slate-500">${r.tipo}</td>
+            <td class="px-3 py-2.5 text-center">${r.not}</td>
+            <td class="px-3 py-2.5 text-center">${r.and}</td>
+            <td class="px-3 py-2.5 text-center">${r.or}</td>
+            <td class="px-3 py-2.5 text-center">${r.nand}</td>
+            <td class="px-3 py-2.5 text-center">${r.nor}</td>
+            <td class="px-4 py-2.5 text-center font-bold text-slate-900 bg-slate-50">${r.total}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        alert('Error de conexión: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+
+    async function downloadConfigFile() {
+      const total = 2 ** currentBits;
+      const zeros = [];
+      for (let i = 0; i < total; i++) {
+        if (rowValues[i] === 0) zeros.push(i);
+      }
+      const activeVars = varNamesPool.slice(0, currentBits);
+
+      const res = await fetch('/api/download_config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables: activeVars, zeros: zeros })
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'funcion.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function handleFileSelected(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const text = evt.target.result;
+        parseAndApplyFileContent(text);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseAndApplyFileContent(text) {
+      let variables = null;
+      let zeros = null;
+      let ones = null;
+      let nBits = null;
+
+      text.split('\n').forEach(line => {
+        line = line.trim();
+        if (line.includes('#')) line = line.split('#')[0].trim();
+        if (line.includes('//')) line = line.split('//')[0].trim();
+        if (!line) return;
+
+        if (line.includes('=') || line.includes(':')) {
+          const sep = line.includes('=') ? '=' : ':';
+          const parts = line.split(sep);
+          const k = parts[0].trim().toLowerCase();
+          const v = parts.slice(1).join(sep).trim();
+
+          if (['variables', 'vars', 'var'].includes(k)) {
+            variables = v.split(/[,; ]+/).map(x => x.trim().toUpperCase()).filter(x => x.length > 0);
+          } else if (['bits', 'num_bits'].includes(k)) {
+            nBits = parseInt(v);
+          } else if (['f', 'salidas_en_0', 'ceros', 'maxiterminos'].includes(k)) {
+            const matches = v.match(/\b\d+\b/g);
+            if (matches) zeros = matches.map(Number);
+          } else if (["f'", 'salidas_en_1', 'unos', 'miniterminos'].includes(k)) {
+            const matches = v.match(/\b\d+\b/g);
+            if (matches) ones = matches.map(Number);
+          }
+        }
+      });
+
+      let detectedBits = nBits || (variables ? variables.length : 4);
+      if (zeros && zeros.length > 0) {
+        const maxZ = Math.max(...zeros);
+        detectedBits = Math.max(detectedBits, maxZ.toString(2).length);
+      }
+      if (ones && ones.length > 0) {
+        const maxO = Math.max(...ones);
+        detectedBits = Math.max(detectedBits, maxO.toString(2).length);
+      }
+      detectedBits = Math.min(5, Math.max(2, detectedBits));
+
+      setNumBits(detectedBits);
+      const total = 2 ** detectedBits;
+
+      if (zeros) {
+        for (let i = 0; i < total; i++) {
+          rowValues[i] = zeros.includes(i) ? 0 : 1;
+          updateRowButton(i);
+        }
+      } else if (ones) {
+        for (let i = 0; i < total; i++) {
+          rowValues[i] = ones.includes(i) ? 1 : 0;
+          updateRowButton(i);
+        }
+      }
+
+      updateLabels();
+      processCurrentTable();
+    }
 
     function switchKmapTab(tab) {
       currentKmapTab = tab;
@@ -457,105 +772,9 @@
       }
     }
 
-    // File Upload Handler
-    function handleFileUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        document.getElementById('configEditor').value = evt.target.result;
-        processFunction();
-      };
-      reader.readAsText(file);
-    }
-
-    // Download current editor content as .txt
-    function downloadCurrentConfig() {
-      const text = document.getElementById('configEditor').value;
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'funcion.txt';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    // Load default config template
-    async function loadDefaultConfig() {
-      try {
-        const res = await fetch('/api/default_config');
-        const data = await res.json();
-        document.getElementById('configEditor').value = data.config_text;
-        processFunction();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // Main Process function
-    async function processFunction() {
-      const btn = document.getElementById('btnProcess');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Procesando...</span>';
-
-      const config_text = document.getElementById('configEditor').value;
-
-      try {
-        const response = await fetch('/api/process', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ config_text })
-        });
-        const json = await response.json();
-        if (!json.success) {
-          alert('Error al procesar la función: ' + json.error);
-          return;
-        }
-
-        const d = json.data;
-        document.getElementById('unreducedSop').innerText = d.unreduced_sop;
-        document.getElementById('unreducedPos').innerText = d.unreduced_pos;
-        document.getElementById('reducedSop').innerText = d.reduced_sop;
-        document.getElementById('reducedPos').innerText = d.reduced_pos;
-
-        // Update Kmaps image
-        switchKmapTab(currentKmapTab);
-
-        // Update Table
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        d.tabla_conteo.forEach(r => {
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-50 transition';
-          tr.innerHTML = `
-            <td class="px-4 py-2.5 font-bold text-slate-700">${r.num}</td>
-            <td class="px-4 py-2.5 font-semibold text-slate-900">${r.nombre}</td>
-            <td class="px-4 py-2.5 text-xs text-slate-500">${r.tipo}</td>
-            <td class="px-3 py-2.5 text-center">${r.not}</td>
-            <td class="px-3 py-2.5 text-center">${r.and}</td>
-            <td class="px-3 py-2.5 text-center">${r.or}</td>
-            <td class="px-3 py-2.5 text-center">${r.nand}</td>
-            <td class="px-3 py-2.5 text-center">${r.nor}</td>
-            <td class="px-4 py-2.5 text-center font-bold text-slate-900 bg-slate-50">${r.total}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-      } catch (err) {
-        alert('Error de conexión con el servidor: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    }
-
-    // Auto initialize on load
     window.addEventListener('DOMContentLoaded', () => {
-      loadDefaultConfig();
+      setNumBits(4);
+      processCurrentTable();
     });
   </script>
 </body>
