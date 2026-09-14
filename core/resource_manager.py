@@ -3,11 +3,16 @@
 Módulo de Detección Dinámica de Recursos (Resource Manager)
 Detecta automáticamente el entorno de ejecución (Render, Docker con límites de cgroup,
 o máquina local con abundantes recursos) y configura los perfiles de memoria, DPI y limpieza.
+Totalmente resiliente: funciona incluso si psutil no está instalado usando /proc/meminfo.
 """
 
 import os
 import gc
-import psutil
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 # Límite para considerar un entorno de memoria restringida (1.2 GB en bytes)
 RESTRICTED_RAM_THRESHOLD_BYTES = 1.2 * 1024 * 1024 * 1024
@@ -57,8 +62,27 @@ def get_system_profile():
     
     cgroup_limit = _detect_cgroup_memory_limit()
     
-    total_ram = psutil.virtual_memory().total
-    avail_ram = psutil.virtual_memory().available
+    total_ram = None
+    avail_ram = None
+
+    if psutil is not None:
+        try:
+            total_ram = psutil.virtual_memory().total
+            avail_ram = psutil.virtual_memory().available
+        except Exception:
+            pass
+
+    # Fallback sin psutil para Linux (/proc/meminfo)
+    if total_ram is None and os.path.exists("/proc/meminfo"):
+        try:
+            with open("/proc/meminfo", "r") as f:
+                for line in f:
+                    if line.startswith("MemTotal:"):
+                        total_ram = int(line.split()[1]) * 1024
+                    elif line.startswith("MemAvailable:"):
+                        avail_ram = int(line.split()[1]) * 1024
+        except Exception:
+            pass
 
     # Determinar si es entorno de baja memoria
     if override in ["1", "true", "yes"]:
@@ -69,7 +93,10 @@ def get_system_profile():
         is_low_resource = True
     elif cgroup_limit and cgroup_limit <= RESTRICTED_RAM_THRESHOLD_BYTES:
         is_low_resource = True
-    elif total_ram <= RESTRICTED_RAM_THRESHOLD_BYTES or avail_ram < (550 * 1024 * 1024):
+    elif total_ram and (total_ram <= RESTRICTED_RAM_THRESHOLD_BYTES or (avail_ram and avail_ram < (550 * 1024 * 1024))):
+        is_low_resource = True
+    elif total_ram is None:
+        # En caso de no poder detectar la RAM (ej. contenedor minimalista), activar modo seguro
         is_low_resource = True
     else:
         is_low_resource = False
