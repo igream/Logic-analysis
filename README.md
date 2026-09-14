@@ -1,3 +1,13 @@
+---
+title: Logic Analysis
+emoji: ⚡
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Logic Analysis: Reductor Booleano y Síntesis de Circuitos Digitales
 
 Aplicación interactiva y sistema de análisis para reducción de funciones booleanas (SOP y POS), generación de mapas de Karnaugh y síntesis de esquemáticos lógicos empleando **exclusivamente compuertas de 2 entradas** (estándar AND/OR/NOT, universal NAND y universal NOR, con optimización por el principio de doble negación).
