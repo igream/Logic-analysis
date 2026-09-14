@@ -276,7 +276,7 @@
     </section>
 
     <!-- Resultados Generados -->
-    <div id="resultsSection" class="space-y-8">
+    <div id="resultsSection" class="hidden space-y-8">
       
       <!-- 1. Expresiones Lógicas -->
       <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
@@ -694,7 +694,6 @@
 
       renderTruthTable();
       updateLabels();
-      processCurrentTable();
     }
 
     function toggleRowValue(idx) {
@@ -857,6 +856,8 @@
 
         const d = json.data;
         const timestamp = Date.now();
+
+        document.getElementById('resultsSection').classList.remove('hidden');
 
         document.getElementById('unreducedSop').innerText = d.unreduced_sop || '0';
         document.getElementById('unreducedPos').innerText = d.unreduced_pos || '1';
@@ -1104,7 +1105,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       setNumBits(4);
       updateSelectedDiagramsCount();
-      processCurrentTable();
     });
   </script>
 </body>
