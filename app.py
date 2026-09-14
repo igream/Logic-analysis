@@ -9,6 +9,15 @@ import os
 import zipfile
 from flask import Flask, render_template, request, jsonify, send_file
 
+try:
+    import spaces
+
+    @spaces.GPU(duration=1)
+    def _hf_zerogpu_check():
+        return None
+except Exception:
+    pass
+
 from core import (
     process_logic,
     parse_function_text,
