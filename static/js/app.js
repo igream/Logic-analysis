@@ -331,6 +331,7 @@ async function processCurrentTable() {
             p.innerText = `${r.nor} compuertas NOR de 2 entradas`;
           }
         }
+        resetZoomDiagram('img_' + r.id);
       }
 
       // Actualizar subtítulo en el checkbox del Paso 3
@@ -545,7 +546,220 @@ function switchCircuitFamily(fam) {
   }
 }
 
+// =============================================================================
+// ZOOM Y PAN INTERACTIVO PARA DIAGRAMAS
+// =============================================================================
+const zoomLevels = {};
+
+function getZoomLevel(imgId) {
+  if (zoomLevels[imgId] === undefined) zoomLevels[imgId] = 1.0;
+  return zoomLevels[imgId];
+}
+
+function updateZoomLabel(imgId, val) {
+  const lbl = document.getElementById('zoom_label_' + imgId);
+  if (lbl) {
+    lbl.innerText = Math.round(val * 100) + '%';
+  }
+}
+
+function zoomDiagram(imgId, delta) {
+  const img = document.getElementById(imgId);
+  if (!img) return;
+  let cur = getZoomLevel(imgId);
+  cur = Math.min(4.0, Math.max(0.3, cur + delta));
+  zoomLevels[imgId] = cur;
+  applyDiagramZoom(imgId);
+}
+
+function resetZoomDiagram(imgId) {
+  zoomLevels[imgId] = 1.0;
+  applyDiagramZoom(imgId, true);
+}
+
+function fitZoomDiagram(imgId) {
+  const img = document.getElementById(imgId);
+  if (!img) return;
+  zoomLevels[imgId] = 1.0;
+  img.style.transform = 'scale(1)';
+  img.style.maxWidth = '100%';
+  img.style.width = 'auto';
+  updateZoomLabel(imgId, 1.0);
+}
+
+function applyDiagramZoom(imgId, isReset = false) {
+  const img = document.getElementById(imgId);
+  if (!img) return;
+  const zoom = getZoomLevel(imgId);
+  img.style.maxWidth = (zoom > 1.0 || isReset) ? 'none' : '100%';
+  img.style.transform = `scale(${zoom})`;
+  img.style.transformOrigin = 'center center';
+  updateZoomLabel(imgId, zoom);
+}
+
+// Paneo por arrastre del mouse (Drag to Pan)
+function initDiagramViewports() {
+  document.querySelectorAll('.diagram-viewport').forEach(vp => {
+    let isDown = false;
+    let startX, startY, scrollLeft, scrollTop;
+
+    vp.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button') || e.target.closest('a')) return;
+      isDown = true;
+      vp.classList.add('cursor-grabbing');
+      startX = e.pageX - vp.offsetLeft;
+      startY = e.pageY - vp.offsetTop;
+      scrollLeft = vp.scrollLeft;
+      scrollTop = vp.scrollTop;
+    });
+
+    vp.addEventListener('mouseleave', () => {
+      isDown = false;
+      vp.classList.remove('cursor-grabbing');
+    });
+
+    vp.addEventListener('mouseup', () => {
+      isDown = false;
+      vp.classList.remove('cursor-grabbing');
+    });
+
+    vp.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - vp.offsetLeft;
+      const y = e.pageY - vp.offsetTop;
+      const walkX = (x - startX) * 1.5;
+      const walkY = (y - startY) * 1.5;
+      vp.scrollLeft = scrollLeft - walkX;
+      vp.scrollTop = scrollTop - walkY;
+    });
+
+    // Zoom con Ctrl + Rueda de ratón en el viewport
+    vp.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const img = vp.querySelector('.diagram-img');
+        if (img) {
+          const delta = e.deltaY < 0 ? 0.15 : -0.15;
+          zoomDiagram(img.id, delta);
+        }
+      }
+    }, { passive: false });
+  });
+}
+
+// =============================================================================
+// MODAL LIGHTBOX DE ALTA RESOLUCIÓN
+// =============================================================================
+let lightboxZoomLevel = 1.0;
+let lbIsDown = false;
+let lbStartX, lbStartY, lbTranslateX = 0, lbTranslateY = 0;
+
+function openDiagramLightbox(imgId, title, subtitle) {
+  const sourceImg = document.getElementById(imgId);
+  if (!sourceImg) return;
+
+  const modal = document.getElementById('diagramLightbox');
+  const lbImg = document.getElementById('lightboxImg');
+  const lbTitle = document.getElementById('lightboxTitle');
+  const lbSub = document.getElementById('lightboxSubtitle');
+  const lbDl = document.getElementById('lightboxDownloadBtn');
+
+  lbImg.src = sourceImg.src;
+  lbTitle.innerText = title || 'Diagrama Lógico';
+  lbSub.innerText = subtitle || 'Visualización de alta resolución con compuertas de 2 entradas';
+  if (lbDl) lbDl.href = sourceImg.src;
+
+  lightboxZoomLevel = 1.0;
+  lbTranslateX = 0;
+  lbTranslateY = 0;
+  updateLightboxTransform();
+
+  modal.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+}
+
+function closeDiagramLightbox() {
+  const modal = document.getElementById('diagramLightbox');
+  if (modal) modal.classList.add('hidden');
+  document.body.classList.remove('overflow-hidden');
+}
+
+function lightboxZoom(delta) {
+  lightboxZoomLevel = Math.min(5.0, Math.max(0.2, lightboxZoomLevel + delta));
+  updateLightboxTransform();
+}
+
+function lightboxResetZoom() {
+  lightboxZoomLevel = 1.0;
+  lbTranslateX = 0;
+  lbTranslateY = 0;
+  updateLightboxTransform();
+}
+
+function lightboxFitZoom() {
+  const vp = document.getElementById('lightboxViewport');
+  const img = document.getElementById('lightboxImg');
+  if (vp && img && img.naturalWidth && img.naturalHeight) {
+    const scaleX = (vp.clientWidth - 60) / img.naturalWidth;
+    const scaleY = (vp.clientHeight - 60) / img.naturalHeight;
+    lightboxZoomLevel = Math.min(scaleX, scaleY, 1.0);
+    lbTranslateX = 0;
+    lbTranslateY = 0;
+    updateLightboxTransform();
+  }
+}
+
+function updateLightboxTransform() {
+  const wrapper = document.getElementById('lightboxWrapper');
+  const label = document.getElementById('lightboxZoomLabel');
+  if (wrapper) {
+    wrapper.style.transform = `translate(${lbTranslateX}px, ${lbTranslateY}px) scale(${lightboxZoomLevel})`;
+  }
+  if (label) {
+    label.innerText = Math.round(lightboxZoomLevel * 100) + '%';
+  }
+}
+
+function initLightboxEvents() {
+  const vp = document.getElementById('lightboxViewport');
+  if (!vp) return;
+
+  vp.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.2 : -0.2;
+    lightboxZoom(delta);
+  }, { passive: false });
+
+  vp.addEventListener('mousedown', (e) => {
+    lbIsDown = true;
+    vp.classList.add('cursor-grabbing');
+    lbStartX = e.clientX - lbTranslateX;
+    lbStartY = e.clientY - lbTranslateY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    lbIsDown = false;
+    if (vp) vp.classList.remove('cursor-grabbing');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!lbIsDown) return;
+    lbTranslateX = e.clientX - lbStartX;
+    lbTranslateY = e.clientY - lbStartY;
+    updateLightboxTransform();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeDiagramLightbox();
+    }
+  });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   setNumBits(4);
   updateSelectedDiagramsCount();
+  initDiagramViewports();
+  initLightboxEvents();
 });

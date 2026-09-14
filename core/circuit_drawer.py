@@ -68,16 +68,24 @@ def render_diagram_to_file(expr_str, outlabel, title, filepath, figsize=(16, 9),
             return filepath
 
         d = logicparse(expr_str, outlabel=outlabel)
-        fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+        bb = d.get_bbox()
+        w = max(1.0, bb.xmax - bb.xmin)
+        h = max(1.0, bb.ymax - bb.ymin)
+
+        # Dimensiones dinámicas proporcionales para evitar compresión y asegurar legibilidad
+        fig_w = max(float(figsize[0]), w * 1.35 + 3.0)
+        fig_h = max(float(figsize[1]), h * 1.2 + 2.0)
+
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=max(200, dpi))
         d.draw(canvas=ax, show=False)
-        ax.set_title(title, fontsize=11, fontweight='bold', pad=16)
+        ax.set_title(title, fontsize=12.5, fontweight='bold', pad=18)
         ax.axis('off')
-        plt.savefig(filepath, dpi=dpi, bbox_inches='tight')
+        plt.savefig(filepath, dpi=max(200, dpi), bbox_inches='tight')
         plt.close(fig)
     except Exception as e:
         print(f"Aviso en renderizado de {filepath}: {e}")
-        fig, ax = plt.subplots(figsize=(10, 4), dpi=dpi)
-        ax.text(0.5, 0.5, f"{title}\n\nFunción: {outlabel} = {str(expr_str)[:70]}", 
+        fig, ax = plt.subplots(figsize=(12, 5), dpi=dpi)
+        ax.text(0.5, 0.5, f"{title}\n\nFunción: {outlabel} = {str(expr_str)[:100]}", 
                 ha='center', va='center', fontsize=11, fontweight='bold',
                 bbox=dict(boxstyle="round,pad=1", fc="#f8fafc", ec="#cbd5e1", lw=1.5))
         ax.axis('off')

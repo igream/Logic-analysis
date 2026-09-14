@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Módulo de Síntesis de Árboles Binarios de Circuitos
 Genera expresiones de interconexión con compuertas estrictas de 2 entradas
@@ -144,37 +144,23 @@ def build_tree_nor_reduced_pos(clauses):
 def build_tree_nor_direct_sop(terms):
     if not terms or terms == [[False]] or terms == [[True]]: return ""
     def nor_and(items):
-        if not items: return ""
-        cur = items[0]
-        for extra in items[1:]:
-            cur = f"(({cur} nor {cur}) nor ({extra} nor {extra}))"
-        return cur
-    def nor_or(items):
-        if not items: return ""
-        cur = items[0]
-        for extra in items[1:]:
-            cur = f"(({cur} nor {extra}) nor ({cur} nor {extra}))"
-        return cur
-    term_trees = []
+        if len(items) == 1: return items[0]
+        m = len(items) // 2
+        l = nor_and(items[:m])
+        r = nor_and(items[m:])
+        return f"(({l} nor {l}) nor ({r} nor {r}))"
+    term_strings = []
     for t in terms:
-        l_strs = [f"({l.args[0]} nor {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in t]
-        term_trees.append(nor_and(l_strs))
-    return nor_or(term_trees)
+        lits = [f"({l.args[0]} nor {l.args[0]})" if isinstance(l, sympy.Not) else str(l) for l in t]
+        term_strings.append(nor_and(lits))
+    def nor_or(items):
+        if len(items) == 1: return items[0]
+        m = len(items) // 2
+        t = f"({nor_or(items[:m])} nor {nor_or(items[m:])})"
+        return f"({t} nor {t})"
+    return nor_or(term_strings)
 
 def build_tree_nor_reduced_sop(terms):
-    if not terms or terms == [[False]] or terms == [[True]]: return ""
-    term_trees = []
-    for t in terms:
-        l_strs = [str(l.args[0]) if isinstance(l, sympy.Not) else f"({l} nor {l})" for l in t]
-        if len(l_strs) == 1:
-            term_trees.append(l_strs[0])
-        else:
-            cur = f"({l_strs[0]} nor {l_strs[1]})"
-            for extra in l_strs[2:]:
-                cur = f"(({cur} nor {cur}) nor {extra})"
-            term_trees.append(cur)
-    if not term_trees: return ""
-    cur = term_trees[0]
-    for extra in term_trees[1:]:
-        cur = f"(({cur} nor {extra}) nor ({cur} nor {extra}))"
-    return cur
+    # Por dualidad y simetría con POS NAND reducido
+    return build_tree_nor_direct_sop(terms)
+
