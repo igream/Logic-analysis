@@ -60,7 +60,7 @@ def download_config():
     zeros = data.get("zeros", [0, 1, 2, 5, 6, 7, 11, 15])
 
     text = "# ==============================================================================\n"
-    text += "# CONFIGURACIÓN GENERADA DESDE LA TABLA DE VERDAD (Logic-Analisis)\n"
+    text += "# CONFIGURACIÓN GENERADA DESDE LA TABLA DE VERDAD (Logic Analysis)\n"
     text += "# ==============================================================================\n"
     text += f"variables = {', '.join(variables)}\n"
     text += f"f = ({', '.join(str(x) for x in zeros)})  # Salidas en 0 (Maxitérminos)\n"
@@ -94,7 +94,7 @@ def download_zip():
                         zf.write(fpath, arcname=f"Resultados/{fname}")
         zf.writestr("funcion_ejemplo.txt", DEFAULT_CONFIG)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Resultados_Logic_Analisis.zip", mimetype="application/zip")
+    return send_file(buffer, as_attachment=True, download_name="Resultados_Logic_Analysis.zip", mimetype="application/zip")
 
 
 @app.after_request
@@ -106,5 +106,5 @@ def add_header(response):
 
 
 if __name__ == "__main__":
-    print("Iniciando Servidor Web Logic-Analisis en http://localhost:5000")
+    print("Iniciando Servidor Web Logic Analysis en http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)

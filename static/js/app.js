@@ -1,5 +1,5 @@
 /**
- * Logic-Analisis Web Application
+ * Logic Analysis Web Application
  * Manejo interactivo de la interfaz: tabla de verdad dinámica (2 a 5 bits),
  * selección de familias de diagramas, filtros, procesamiento asíncrono y descarga.
  */

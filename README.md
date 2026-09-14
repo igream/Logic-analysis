@@ -1,8 +1,8 @@
-﻿# Logic-Analisis: Reductor Booleano y Síntesis de Circuitos Digitales
+# Logic Analysis: Reductor Booleano y Síntesis de Circuitos Digitales
 
 Aplicación interactiva y sistema de análisis para reducción de funciones booleanas (SOP y POS), generación de mapas de Karnaugh y síntesis de esquemáticos lógicos empleando **exclusivamente compuertas de 2 entradas** (estándar AND/OR/NOT, universal NAND y universal NOR, con optimización por el principio de doble negación).
 
-🔗 **Repositorio GitHub:** [https://github.com/igream/Logic-Analisis](https://github.com/igream/Logic-Analisis)
+🔗 **Repositorio GitHub:** [https://github.com/igream/Logic-analysis](https://github.com/igream/Logic-analysis)
 
 ---
 
@@ -52,7 +52,7 @@ f = (0, 1, 2, 5, 6, 7, 11, 15)
 ## 📁 Estructura del Proyecto
 
 ```
-Logic-Analisis/
+Logic-Analysis/
 │
 ├── app.py                                     # Servidor Web Flask (Frontend y API)
 ├── main.py                                    # Script ejecutable CLI con soporte para archivos externos
