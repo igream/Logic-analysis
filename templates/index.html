@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic-Analisis | Reductor Booleano y Síntesis de Circuitos</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    pre, code, textarea { font-family: 'JetBrains Mono', monospace; }
+    .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i class="fa-solid fa-microchip text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">Logic-Analisis</h1>
+          <p class="text-xs text-slate-500 font-medium">Reductor Booleano y Síntesis de Circuitos de 2 Entradas</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <a href="https://github.com/igream/Logic-Analisis" target="_blank" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          <i class="fa-brands fa-github text-sm"></i>
+          <span>Repositorio</span>
+        </a>
+        <a href="/api/download_zip" class="inline-flex items-center space-x-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-file-zipper"></i>
+          <span>Descargar Todo (.ZIP)</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Hero / Input Section -->
+    <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-100">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 flex items-center space-x-2">
+            <span>Definición de la Función Booleana</span>
+            <span class="text-xs bg-brand-50 text-brand-700 font-semibold px-2.5 py-0.5 rounded-full border border-brand-200">4 bits / 2 entradas</span>
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Escribe la función directamente o sube un archivo de texto <code class="bg-slate-100 px-1 py-0.5 rounded text-brand-700 text-xs">.txt</code> con tus términos.</p>
+        </div>
+        <!-- Tool Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- File input hidden -->
+          <input type="file" id="fileInput" accept=".txt" class="hidden" onchange="handleFileUpload(event)">
+          <button onclick="document.getElementById('fileInput').click()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+            <i class="fa-solid fa-upload text-slate-500"></i>
+            <span>Cargar Archivo (.txt)</span>
+          </button>
+          <button onclick="downloadCurrentConfig()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+            <i class="fa-solid fa-download text-slate-500"></i>
+            <span>Descargar Función (.txt)</span>
+          </button>
+          <button onclick="loadDefaultConfig()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+            <i class="fa-solid fa-arrow-rotate-left text-slate-500"></i>
+            <span>Ejemplo Defecto</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor & Actions -->
+      <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-2">
+          <label for="configEditor" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+            Editor de Configuración
+          </label>
+          <div class="relative">
+            <textarea id="configEditor" rows="7" class="w-full bg-slate-900 text-emerald-400 font-mono text-sm rounded-xl p-4 border border-slate-800 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 shadow-inner resize-y transition" placeholder="# Escribe tus variables y salidas aquí..."></textarea>
+          </div>
+        </div>
+
+        <div class="flex flex-col justify-between space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs text-slate-600">
+          <div>
+            <span class="font-bold text-slate-800 flex items-center space-x-1.5 mb-2">
+              <i class="fa-solid fa-circle-info text-brand-600"></i>
+              <span>Formatos de Entrada Válidos</span>
+            </span>
+            <ul class="space-y-1.5 list-disc list-inside">
+              <li><b class="text-slate-800">Por Ceros (Maxitérminos):</b><br><code class="text-brand-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 inline-block mt-0.5">f = (0, 1, 2, 5, 6, 7, 11, 15)</code></li>
+              <li><b class="text-slate-800">Por Unos (Minitérminos):</b><br><code class="text-brand-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 inline-block mt-0.5">salidas_en_1 = 3, 4, 8, 9, 10, 12, 13, 14</code></li>
+              <li><b class="text-slate-800">Variables:</b> <code class="text-brand-700 bg-white px-1.5 py-0.5 rounded border border-slate-200">variables = A, B, C, D</code></li>
+            </ul>
+          </div>
+          <button id="btnProcess" onclick="processFunction()" class="w-full py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 hover:shadow-brand-500/30 flex items-center justify-center space-x-2 transition">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Procesar y Generar Circuitos</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Container -->
+    <div id="resultsSection" class="space-y-8">
+      
+      <!-- 1. Expresiones Lógicas -->
+      <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+        <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center space-x-2">
+          <i class="fa-solid fa-square-root-variable text-brand-600"></i>
+          <span>1. Expresiones Lógicas Obtenidas</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Unreduced SOP -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Minitérminos No Reducida (f')</span>
+            <div id="unreducedSop" class="font-mono text-xs text-slate-800 break-words bg-white p-3 rounded-lg border border-slate-200">...</div>
+          </div>
+          <!-- Unreduced POS -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Maxitérminos No Reducida (f)</span>
+            <div id="unreducedPos" class="font-mono text-xs text-slate-800 break-words bg-white p-3 rounded-lg border border-slate-200">...</div>
+          </div>
+          <!-- Reduced SOP -->
+          <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">Minitérminos Reducida (f' - SOP)</span>
+              <span class="text-[11px] bg-brand-100 text-brand-800 font-semibold px-2 py-0.5 rounded">Simplificada por K-Map</span>
+            </div>
+            <div id="reducedSop" class="font-mono text-sm font-bold text-brand-900 break-words bg-white p-3 rounded-lg border border-indigo-200">...</div>
+          </div>
+          <!-- Reduced POS -->
+          <div class="p-4 rounded-xl bg-rose-50/50 border border-rose-200">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-rose-800 uppercase tracking-wider">Maxitérminos Reducida (f - POS)</span>
+              <span class="text-[11px] bg-rose-100 text-rose-800 font-semibold px-2 py-0.5 rounded">Simplificada por K-Map</span>
+            </div>
+            <div id="reducedPos" class="font-mono text-sm font-bold text-rose-900 break-words bg-white p-3 rounded-lg border border-rose-200">...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Mapas de Karnaugh -->
+      <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+            <i class="fa-solid fa-table-cells text-brand-600"></i>
+            <span>2. Mapas de Karnaugh Resueltos</span>
+          </h3>
+          <div class="flex space-x-2">
+            <button onclick="switchKmapTab('min')" id="btnKmapMin" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition">Minitérminos (f')</button>
+            <button onclick="switchKmapTab('max')" id="btnKmapMax" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Maxitérminos (f)</button>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center bg-slate-50 p-6 rounded-xl border border-slate-200">
+          <div id="kmapContainer" class="max-w-xl w-full flex flex-col items-center">
+            <img id="kmapImage" src="/static/generated/kmap_miniterminos.png" alt="Mapa de Karnaugh" class="max-h-[500px] object-contain rounded-lg shadow-sm border border-slate-200 bg-white">
+          </div>
+          <div class="mt-4 flex items-center space-x-3">
+            <a id="kmapDownloadBtn" href="/static/generated/kmap_miniterminos.png" download class="inline-flex items-center space-x-2 text-xs font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition">
+              <i class="fa-solid fa-download"></i>
+              <span>Descargar Mapa K (.PNG)</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Diagramas de Circuitos (Compuertas de 2 Entradas) -->
+      <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+              <i class="fa-solid fa-diagram-project text-brand-600"></i>
+              <span>3. Diagramas Lógicos con Compuertas de 2 Entradas</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Símbolos distintivos ANSI/IEEE Std 91-1984 y orientación uniforme.</p>
+          </div>
+          <!-- Circuit Tabs -->
+          <div class="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+            <button onclick="switchCircuitFamily('and_or')" id="tab_and_or" class="px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition">AND / OR / NOT</button>
+            <button onclick="switchCircuitFamily('nand')" id="tab_nand" class="px-3 py-1.5 font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">Universal NAND</button>
+            <button onclick="switchCircuitFamily('nor')" id="tab_nor" class="px-3 py-1.5 font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">Universal NOR</button>
+          </div>
+        </div>
+
+        <!-- Circuit Galleries -->
+        <!-- AND / OR / NOT -->
+        <div id="gallery_and_or" class="grid grid-cols-1 gap-6">
+          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-slate-900">SOP Minitérminos (f') - Compuertas Estándar</h4>
+                <p class="text-xs text-slate-500">4 NOT + 8 AND (2-in) + 3 OR (2-in) = 15 compuertas</p>
+              </div>
+              <a href="/static/generated/diagrama_SOP_AND_OR_NOT.png" download class="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_SOP_AND_OR_NOT.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama SOP AND OR NOT">
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-slate-900">POS Maxitérminos (f) - Compuertas Estándar</h4>
+                <p class="text-xs text-slate-500">4 NOT + 8 OR (2-in) + 3 AND (2-in) = 15 compuertas</p>
+              </div>
+              <a href="/static/generated/diagrama_POS_AND_OR_NOT.png" download class="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_POS_AND_OR_NOT.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama POS AND OR NOT">
+          </div>
+        </div>
+
+        <!-- NAND Universal -->
+        <div id="gallery_nand" class="hidden grid grid-cols-1 gap-6">
+          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-slate-900">SOP NAND Universal (Directo)</h4>
+                <p class="text-xs text-slate-500">29 compuertas NAND de 2 entradas</p>
+              </div>
+              <a href="/static/generated/diagrama_SOP_NAND.png" download class="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_SOP_NAND.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama SOP NAND">
+          </div>
+
+          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
+                  <span>SOP NAND Reducido (Doble Negación)</span>
+                  <span class="text-[11px] bg-brand-100 text-brand-800 font-semibold px-2 py-0.5 rounded">8 compuertas ahorradas</span>
+                </h4>
+                <p class="text-xs text-slate-600">Cancelación en cascada en la frontera AND-OR | Total: 21 compuertas NAND</p>
+              </div>
+              <a href="/static/generated/diagrama_SOP_NAND_reducido.png" download class="text-xs px-3 py-1.5 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 font-medium text-brand-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_SOP_NAND_reducido.png" class="w-full rounded-lg border border-indigo-200 bg-white" alt="Diagrama SOP NAND Reducido">
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-slate-900">POS NAND Universal (Directo)</h4>
+                <p class="text-xs text-slate-500">34 compuertas NAND de 2 entradas</p>
+              </div>
+              <a href="/static/generated/diagrama_POS_NAND.png" download class="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_POS_NAND.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama POS NAND">
+          </div>
+
+          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
+                  <span>POS NAND Reducido (Doble Negación)</span>
+                  <span class="text-[11px] bg-brand-100 text-brand-800 font-semibold px-2 py-0.5 rounded">12 compuertas ahorradas</span>
+                </h4>
+                <p class="text-xs text-slate-600">Cancelación de negaciones dobles en literales | Total: 22 compuertas NAND</p>
+              </div>
+              <a href="/static/generated/diagrama_POS_NAND_reducido.png" download class="text-xs px-3 py-1.5 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 font-medium text-brand-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_POS_NAND_reducido.png" class="w-full rounded-lg border border-indigo-200 bg-white" alt="Diagrama POS NAND Reducido">
+          </div>
+        </div>
+
+        <!-- NOR Universal -->
+        <div id="gallery_nor" class="hidden grid grid-cols-1 gap-6">
+          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-slate-900">POS NOR Universal (Directo)</h4>
+                <p class="text-xs text-slate-500">29 compuertas NOR de 2 entradas</p>
+              </div>
+              <a href="/static/generated/diagrama_POS_NOR.png" download class="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_POS_NOR.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama POS NOR">
+          </div>
+
+          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
+                  <span>POS NOR Reducido (Doble Negación)</span>
+                  <span class="text-[11px] bg-brand-100 text-brand-800 font-semibold px-2 py-0.5 rounded">8 compuertas ahorradas</span>
+                </h4>
+                <p class="text-xs text-slate-600">Cancelación en cascada en la frontera OR-AND | Total: 21 compuertas NOR</p>
+              </div>
+              <a href="/static/generated/diagrama_POS_NOR_reducido.png" download class="text-xs px-3 py-1.5 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 font-medium text-brand-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_POS_NOR_reducido.png" class="w-full rounded-lg border border-indigo-200 bg-white" alt="Diagrama POS NOR Reducido">
+          </div>
+
+          <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-slate-900">SOP NOR Universal (Directo)</h4>
+                <p class="text-xs text-slate-500">34 compuertas NOR de 2 entradas</p>
+              </div>
+              <a href="/static/generated/diagrama_SOP_NOR.png" download class="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_SOP_NOR.png" class="w-full rounded-lg border border-slate-200 bg-white" alt="Diagrama SOP NOR">
+          </div>
+
+          <div class="bg-indigo-50/40 p-5 rounded-xl border border-indigo-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-brand-900 flex items-center space-x-2">
+                  <span>SOP NOR Reducido (Doble Negación)</span>
+                  <span class="text-[11px] bg-brand-100 text-brand-800 font-semibold px-2 py-0.5 rounded">12 compuertas ahorradas</span>
+                </h4>
+                <p class="text-xs text-slate-600">Cancelación de negaciones dobles en literales | Total: 22 compuertas NOR</p>
+              </div>
+              <a href="/static/generated/diagrama_SOP_NOR_reducido.png" download class="text-xs px-3 py-1.5 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 font-medium text-brand-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download"></i><span>Descargar</span>
+              </a>
+            </div>
+            <img src="/static/generated/diagrama_SOP_NOR_reducido.png" class="w-full rounded-lg border border-indigo-200 bg-white" alt="Diagrama SOP NOR Reducido">
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Tabla Concluyente de Conteo de Compuertas -->
+      <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+              <i class="fa-solid fa-list-check text-brand-600"></i>
+              <span>4. Tabla Concluyente: Conteo Exacto de Compuertas</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Todas las compuertas implementadas son estrictamente de 2 entradas.</p>
+          </div>
+          <a href="/api/download_zip" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+            <i class="fa-solid fa-file-zipper"></i>
+            <span>Descargar Todo (.ZIP)</span>
+          </a>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm text-left">
+            <thead class="bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <tr>
+                <th class="px-4 py-3">#</th>
+                <th class="px-4 py-3">Circuito Implementado</th>
+                <th class="px-4 py-3">Arquitectura</th>
+                <th class="px-3 py-3 text-center">NOT</th>
+                <th class="px-3 py-3 text-center">AND (2-in)</th>
+                <th class="px-3 py-3 text-center">OR (2-in)</th>
+                <th class="px-3 py-3 text-center">NAND (2-in)</th>
+                <th class="px-3 py-3 text-center">NOR (2-in)</th>
+                <th class="px-4 py-3 text-center font-extrabold text-slate-900 bg-slate-100">TOTAL</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="divide-y divide-slate-100 font-medium text-slate-600">
+              <!-- Se rellena dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+    <p>Proyecto de Reducción Booleana y Síntesis Lógica | Desarrollado para Análisis de Circuitos Digitales</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    let currentKmapTab = 'min';
+
+    function switchKmapTab(tab) {
+      currentKmapTab = tab;
+      const img = document.getElementById('kmapImage');
+      const btnMin = document.getElementById('btnKmapMin');
+      const btnMax = document.getElementById('btnKmapMax');
+      const dlBtn = document.getElementById('kmapDownloadBtn');
+
+      if (tab === 'min') {
+        img.src = '/static/generated/kmap_miniterminos.png?' + Date.now();
+        dlBtn.href = '/static/generated/kmap_miniterminos.png';
+        btnMin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition';
+        btnMax.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+      } else {
+        img.src = '/static/generated/kmap_maxiterminos.png?' + Date.now();
+        dlBtn.href = '/static/generated/kmap_maxiterminos.png';
+        btnMax.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition';
+        btnMin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+      }
+    }
+
+    function switchCircuitFamily(fam) {
+      const gAndOr = document.getElementById('gallery_and_or');
+      const gNand = document.getElementById('gallery_nand');
+      const gNor = document.getElementById('gallery_nor');
+
+      const tAndOr = document.getElementById('tab_and_or');
+      const tNand = document.getElementById('tab_nand');
+      const tNor = document.getElementById('tab_nor');
+
+      [gAndOr, gNand, gNor].forEach(g => g.classList.add('hidden'));
+      [tAndOr, tNand, tNor].forEach(t => {
+        t.className = 'px-3 py-1.5 font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition';
+      });
+
+      if (fam === 'and_or') {
+        gAndOr.classList.remove('hidden');
+        tAndOr.className = 'px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition';
+      } else if (fam === 'nand') {
+        gNand.classList.remove('hidden');
+        tNand.className = 'px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition';
+      } else {
+        gNor.classList.remove('hidden');
+        tNor.className = 'px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition';
+      }
+    }
+
+    // File Upload Handler
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('configEditor').value = evt.target.result;
+        processFunction();
+      };
+      reader.readAsText(file);
+    }
+
+    // Download current editor content as .txt
+    function downloadCurrentConfig() {
+      const text = document.getElementById('configEditor').value;
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'funcion.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Load default config template
+    async function loadDefaultConfig() {
+      try {
+        const res = await fetch('/api/default_config');
+        const data = await res.json();
+        document.getElementById('configEditor').value = data.config_text;
+        processFunction();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Main Process function
+    async function processFunction() {
+      const btn = document.getElementById('btnProcess');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Procesando...</span>';
+
+      const config_text = document.getElementById('configEditor').value;
+
+      try {
+        const response = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config_text })
+        });
+        const json = await response.json();
+        if (!json.success) {
+          alert('Error al procesar la función: ' + json.error);
+          return;
+        }
+
+        const d = json.data;
+        document.getElementById('unreducedSop').innerText = d.unreduced_sop;
+        document.getElementById('unreducedPos').innerText = d.unreduced_pos;
+        document.getElementById('reducedSop').innerText = d.reduced_sop;
+        document.getElementById('reducedPos').innerText = d.reduced_pos;
+
+        // Update Kmaps image
+        switchKmapTab(currentKmapTab);
+
+        // Update Table
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        d.tabla_conteo.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition';
+          tr.innerHTML = `
+            <td class="px-4 py-2.5 font-bold text-slate-700">${r.num}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${r.nombre}</td>
+            <td class="px-4 py-2.5 text-xs text-slate-500">${r.tipo}</td>
+            <td class="px-3 py-2.5 text-center">${r.not}</td>
+            <td class="px-3 py-2.5 text-center">${r.and}</td>
+            <td class="px-3 py-2.5 text-center">${r.or}</td>
+            <td class="px-3 py-2.5 text-center">${r.nand}</td>
+            <td class="px-3 py-2.5 text-center">${r.nor}</td>
+            <td class="px-4 py-2.5 text-center font-bold text-slate-900 bg-slate-50">${r.total}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        alert('Error de conexión con el servidor: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // Auto initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDefaultConfig();
+    });
+  </script>
+</body>
+</html>
