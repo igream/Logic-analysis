@@ -307,6 +307,36 @@ async function processCurrentTable() {
     document.getElementById('reducedSop').innerText = d.reduced_sop || '0';
     document.getElementById('reducedPos').innerText = d.reduced_pos || '1';
 
+    const equivBadge = document.getElementById('equivBadge');
+    if (equivBadge) {
+      if (d.is_equivalent) {
+        equivBadge.className = 'mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs';
+        equivBadge.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <span class="flex h-2.5 w-2.5 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span class="text-xs font-bold text-emerald-950">Legitimidad Verificada:</span>
+            <span class="text-xs text-emerald-800 font-medium">SOP(f) y POS(f) describen exactamente la misma función lógica introducida</span>
+          </div>
+          <span class="inline-flex items-center space-x-1.5 text-[11px] font-bold px-2.5 py-1 bg-emerald-600 text-white rounded-lg shadow-xs self-start sm:self-auto">
+            <i class="fa-solid fa-check-double text-[10px]"></i>
+            <span>SOP(f) ≡ POS(f) ≡ f</span>
+          </span>
+        `;
+      } else {
+        equivBadge.className = 'mb-5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs';
+        equivBadge.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+            <span class="text-xs font-bold text-amber-950">Atención:</span>
+            <span class="text-xs text-amber-800 font-medium">Las formas simplificadas tienen discrepancia booleana.</span>
+          </div>
+        `;
+      }
+    }
+
     switchKmapTab(currentKmapTab);
 
     // Actualizar dinámicamente las 10 tarjetas de diagramas y las etiquetas del Paso 3

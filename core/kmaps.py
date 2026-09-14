@@ -49,27 +49,27 @@ def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir,
     if n_vars in [2, 3, 4]:
         var_str = ''.join(str(v) for v in vars_symbols)
 
-        # 1. K-map f' (Minitérminos)
-        tt_fprime = [(f"{i:0{n_vars}b}", '1' if i in zeros else '0') for i in range(2**n_vars)]
-        groups_fprime = {}
-        patches_fprime = []
+        # 1. K-map f (Minitérminos - SOP)
+        tt_sop = [(f"{i:0{n_vars}b}", '1' if i in ones else '0') for i in range(2**n_vars)]
+        groups_sop = {}
+        patches_sop = []
         for idx, term in enumerate(sop_terms):
             pat = term_to_pattern(term, vars_symbols, is_sop=True)
             c = colors[idx % len(colors)]
             f = fills[idx % len(fills)]
-            groups_fprime[pat] = {'color': c, 'fill': f, 'lw': 2.5}
-            patches_fprime.append(mpatches.Patch(facecolor=f[:7], edgecolor=c, label=f"{format_sop_str(term)}"))
+            groups_sop[pat] = {'color': c, 'fill': f, 'lw': 2.5}
+            patches_sop.append(mpatches.Patch(facecolor=f[:7], edgecolor=c, label=f"{format_sop_str(term)}"))
 
         fig1, ax1 = plt.subplots(figsize=(7.5, 8.5), dpi=dpi)
         d1 = schemdraw.Drawing()
-        k1 = logic.Kmap(names=var_str, truthtable=tt_fprime, groups=groups_fprime)
+        k1 = logic.Kmap(names=var_str, truthtable=tt_sop, groups=groups_sop)
         d1.add(k1)
         d1.draw(show=False, canvas=ax1)
         ax1.axis('off')
         ax1.set_aspect('equal')
-        ax1.legend(handles=patches_fprime, loc='upper center', bbox_to_anchor=(0.5, -0.05),
+        ax1.legend(handles=patches_sop, loc='upper center', bbox_to_anchor=(0.5, -0.05),
                    fontsize=9.5, frameon=True, fancybox=True, title="Lazos de Minitérminos (Unos)")
-        ax1.set_title(f"Mapa de Karnaugh Resuelto - Minitérminos (SOP)\nf' = {format_sop_str(reduced_sop)}",
+        ax1.set_title(f"Mapa de Karnaugh Resuelto - Minitérminos (SOP)\nf = {format_sop_str(reduced_sop)}",
                       fontsize=12, fontweight='bold', color='#0D47A1', pad=20)
         plt.savefig(os.path.join(out_dir, 'kmap_miniterminos.png'), bbox_inches='tight', dpi=dpi)
         plt.close(fig1)
@@ -105,23 +105,23 @@ def generate_kmaps(vars_symbols, zeros, ones, reduced_sop, reduced_pos, out_dir,
         var_names = [str(v) for v in vars_symbols]
         sub_names = ''.join(var_names[1:])
         
-        # Sub-mapas Minitérminos f'
+        # Sub-mapas Minitérminos f (SOP)
         fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7.5), dpi=dpi)
-        tt1 = [(f"{i:04b}", '1' if i in zeros else '0') for i in range(16)]
+        tt1 = [(f"{i:04b}", '1' if i in ones else '0') for i in range(16)]
         d1 = schemdraw.Drawing()
         d1.add(logic.Kmap(names=sub_names, truthtable=tt1))
         d1.draw(show=False, canvas=ax1)
         ax1.axis('off')
         ax1.set_title(f'Sub-mapa {var_names[0]} = 0', fontsize=12, fontweight='bold')
 
-        tt2 = [(f"{i:04b}", '1' if (i + 16) in zeros else '0') for i in range(16)]
+        tt2 = [(f"{i:04b}", '1' if (i + 16) in ones else '0') for i in range(16)]
         d2 = schemdraw.Drawing()
         d2.add(logic.Kmap(names=sub_names, truthtable=tt2))
         d2.draw(show=False, canvas=ax2)
         ax2.axis('off')
         ax2.set_title(f'Sub-mapa {var_names[0]} = 1', fontsize=12, fontweight='bold')
 
-        plt.suptitle(f"Mapa de Karnaugh de 5 Variables - Minitérminos (f')\nf' = {format_sop_str(reduced_sop)}",
+        plt.suptitle(f"Mapa de Karnaugh de 5 Variables - Minitérminos (SOP)\nf = {format_sop_str(reduced_sop)}",
                      fontsize=13, fontweight='bold', color='#0D47A1')
         plt.savefig(os.path.join(out_dir, 'kmap_miniterminos.png'), bbox_inches='tight', dpi=dpi)
         plt.close(fig1)

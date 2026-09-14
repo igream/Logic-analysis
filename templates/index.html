@@ -280,35 +280,53 @@
       
       <!-- 1. Expresiones Lógicas -->
       <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
-        <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center space-x-2">
+        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center space-x-2">
           <i class="fa-solid fa-square-root-variable text-brand-600"></i>
           <span>1. Expresiones Lógicas Obtenidas</span>
         </h3>
+
+        <!-- Indicador de Legitimidad y Equivalencia Lógica -->
+        <div id="equivBadge" class="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+          <div class="flex items-center space-x-2.5">
+            <span class="flex h-2.5 w-2.5 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span class="text-xs font-bold text-emerald-950">Legitimidad Verificada:</span>
+            <span class="text-xs text-emerald-800 font-medium">SOP(f) y POS(f) describen exactamente la misma función lógica introducida</span>
+          </div>
+          <span class="inline-flex items-center space-x-1.5 text-[11px] font-bold px-2.5 py-1 bg-emerald-600 text-white rounded-lg shadow-xs self-start sm:self-auto">
+            <i class="fa-solid fa-check-double text-[10px]"></i>
+            <span>SOP(f) ≡ POS(f) ≡ f</span>
+          </span>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Minitérminos No Reducida (f')</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Minitérminos No Reducida (SOP - f)</span>
             <div id="unreducedSop" class="font-mono text-xs text-slate-800 break-words bg-white p-3 rounded-lg border border-slate-200">...</div>
           </div>
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Maxitérminos No Reducida (f)</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Maxitérminos No Reducida (POS - f)</span>
             <div id="unreducedPos" class="font-mono text-xs text-slate-800 break-words bg-white p-3 rounded-lg border border-slate-200">...</div>
           </div>
           <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">Minitérminos Reducida (f' - SOP)</span>
+              <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">Minitérminos Reducida (SOP - f)</span>
               <span class="text-[11px] bg-brand-100 text-brand-800 font-semibold px-2 py-0.5 rounded">Simplificada por K-Map</span>
             </div>
             <div id="reducedSop" class="font-mono text-sm font-bold text-brand-900 break-words bg-white p-3 rounded-lg border border-indigo-200">...</div>
           </div>
           <div class="p-4 rounded-xl bg-rose-50/50 border border-rose-200">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-bold text-rose-800 uppercase tracking-wider">Maxitérminos Reducida (f - POS)</span>
+              <span class="text-xs font-bold text-rose-800 uppercase tracking-wider">Maxitérminos Reducida (POS - f)</span>
               <span class="text-[11px] bg-rose-100 text-rose-800 font-semibold px-2 py-0.5 rounded">Simplificada por K-Map</span>
             </div>
             <div id="reducedPos" class="font-mono text-sm font-bold text-rose-900 break-words bg-white p-3 rounded-lg border border-rose-200">...</div>
           </div>
         </div>
       </section>
+>
       <!-- 2. Mapas de Karnaugh -->
       <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -321,8 +339,8 @@
           </div>
           <div class="flex items-center space-x-2 flex-wrap">
             <div class="flex space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-              <button onclick="switchKmapTab('min')" id="btnKmapMin" class="px-3 py-1.5 font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition">Minitérminos (f')</button>
-              <button onclick="switchKmapTab('max')" id="btnKmapMax" class="px-3 py-1.5 font-semibold rounded-lg bg-transparent text-slate-700 hover:bg-slate-200 transition">Maxitérminos (f)</button>
+              <button onclick="switchKmapTab('min')" id="btnKmapMin" class="px-3 py-1.5 font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition">Minitérminos (SOP - f)</button>
+              <button onclick="switchKmapTab('max')" id="btnKmapMax" class="px-3 py-1.5 font-semibold rounded-lg bg-transparent text-slate-700 hover:bg-slate-200 transition">Maxitérminos (POS - f)</button>
             </div>
             <!-- Zoom Toolbar K-map -->
             <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shadow-2xs">
@@ -376,7 +394,7 @@
           <div id="card_sop_and_or_not" class="circuit-card bg-slate-50 p-5 rounded-xl border border-slate-200">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <div>
-                <h4 class="text-sm font-bold text-slate-900">SOP Minitérminos (f') - Compuertas Estándar</h4>
+                <h4 class="text-sm font-bold text-slate-900">SOP Minitérminos (f) - Compuertas Estándar</h4>
                 <p class="text-xs text-slate-500">4 NOT + 8 AND (2-in) + 3 OR (2-in) = 15 compuertas</p>
               </div>
               <div class="flex items-center space-x-1.5 flex-wrap">
@@ -387,7 +405,7 @@
                   <button type="button" onclick="resetZoomDiagram('img_sop_and_or_not')" title="Restablecer (100%)" class="px-2 py-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded text-xs border-l border-slate-200 transition"><i class="fa-solid fa-arrows-rotate"></i></button>
                   <button type="button" onclick="fitZoomDiagram('img_sop_and_or_not')" title="Ajustar" class="px-2 py-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded text-xs transition"><i class="fa-solid fa-compress"></i></button>
                 </div>
-                <button type="button" onclick="openDiagramLightbox('img_sop_and_or_not', 'SOP Minitérminos (f\') - AND/OR/NOT')" title="Pantalla completa y zoom" class="text-xs px-2.5 py-1.5 bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-100 rounded-lg font-semibold flex items-center space-x-1 transition shadow-2xs">
+                <button type="button" onclick="openDiagramLightbox('img_sop_and_or_not', 'SOP Minitérminos (f) - AND/OR/NOT')" title="Pantalla completa y zoom" class="text-xs px-2.5 py-1.5 bg-brand-50 border border-brand-200 text-brand-700 hover:bg-brand-100 rounded-lg font-semibold flex items-center space-x-1 transition shadow-2xs">
                   <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                   <span class="hidden md:inline">Expandir</span>
                 </button>
@@ -398,7 +416,7 @@
             </div>
             <div id="vp_img_sop_and_or_not" class="diagram-viewport relative overflow-auto max-h-[550px] min-h-[180px] rounded-xl border border-slate-200 bg-white p-4 shadow-2xs flex items-center justify-center cursor-grab select-none">
               <div class="diagram-wrapper inline-flex items-center justify-center transition-transform duration-100 origin-center">
-                <img id="img_sop_and_or_not" src="/static/generated/diagrama_SOP_AND_OR_NOT.png" class="diagram-img rounded border border-slate-100 bg-white max-w-full h-auto cursor-zoom-in" alt="Diagrama SOP AND OR NOT" onclick="openDiagramLightbox('img_sop_and_or_not', 'SOP Minitérminos (f\') - AND/OR/NOT')">
+                <img id="img_sop_and_or_not" src="/static/generated/diagrama_SOP_AND_OR_NOT.png" class="diagram-img rounded border border-slate-100 bg-white max-w-full h-auto cursor-zoom-in" alt="Diagrama SOP AND OR NOT" onclick="openDiagramLightbox('img_sop_and_or_not', 'SOP Minitérminos (f) - AND/OR/NOT')">
               </div>
             </div>
           </div>

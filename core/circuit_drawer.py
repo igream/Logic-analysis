@@ -175,8 +175,8 @@ def generate_or_restore_all_diagrams(variables, zeros, ones, reduced_sop, reduce
 
     # 1. SOP AND/OR/NOT
     t1 = build_tree_and_or_not(sop_terms, is_sop=True)
-    render_diagram_to_file(t1, "F'",
-                           f"Minitérminos (SOP) - NOT, AND, OR (2 entradas)\nf' = {format_sop_str(reduced_sop)}",
+    render_diagram_to_file(t1, "F",
+                           f"Minitérminos (SOP) - NOT, AND, OR (2 entradas)\nf = {format_sop_str(reduced_sop)}",
                            os.path.join(out_dir, "diagrama_SOP_AND_OR_NOT.png"), dpi=dpi)
 
     # 2. POS AND/OR/NOT
@@ -187,14 +187,14 @@ def generate_or_restore_all_diagrams(variables, zeros, ones, reduced_sop, reduce
 
     # 3. SOP NAND Directo
     t3 = build_tree_nand_direct_sop(sop_terms)
-    render_diagram_to_file(t3, "F'",
-                           f"SOP Universal NAND Directo (2 entradas)\nf' = {format_sop_str(reduced_sop)}",
+    render_diagram_to_file(t3, "F",
+                           f"SOP Universal NAND Directo (2 entradas)\nf = {format_sop_str(reduced_sop)}",
                            os.path.join(out_dir, "diagrama_SOP_NAND.png"), figsize=(18, 10), dpi=dpi)
 
     # 4. SOP NAND Reducido
     t4 = build_tree_nand_reduced_sop(sop_terms)
-    render_diagram_to_file(t4, "F'",
-                           f"SOP Universal NAND Reducido (Doble Negación)\nf' = {format_sop_str(reduced_sop)}",
+    render_diagram_to_file(t4, "F",
+                           f"SOP Universal NAND Reducido (Doble Negación)\nf = {format_sop_str(reduced_sop)}",
                            os.path.join(out_dir, "diagrama_SOP_NAND_reducido.png"), figsize=(16, 9), dpi=dpi)
 
     # 5. POS NAND Directo
@@ -223,14 +223,14 @@ def generate_or_restore_all_diagrams(variables, zeros, ones, reduced_sop, reduce
 
     # 9. SOP NOR Directo
     t9 = build_tree_nor_direct_sop(sop_terms)
-    render_diagram_to_file(t9, "F'",
-                           f"SOP Universal NOR Directo (2 entradas)\nf' = {format_sop_str(reduced_sop)}",
+    render_diagram_to_file(t9, "F",
+                           f"SOP Universal NOR Directo (2 entradas)\nf = {format_sop_str(reduced_sop)}",
                            os.path.join(out_dir, "diagrama_SOP_NOR.png"), figsize=(18, 10), dpi=dpi)
 
     # 10. SOP NOR Reducido
     t10 = build_tree_nor_reduced_sop(sop_terms)
-    render_diagram_to_file(t10, "F'",
-                           f"SOP Universal NOR Reducido (Doble Negación)\nf' = {format_sop_str(reduced_sop)}",
+    render_diagram_to_file(t10, "F",
+                           f"SOP Universal NOR Reducido (Doble Negación)\nf = {format_sop_str(reduced_sop)}",
                            os.path.join(out_dir, "diagrama_SOP_NOR_reducido.png"), figsize=(16, 9), dpi=dpi)
 
     return DIAGRAM_FILENAMES

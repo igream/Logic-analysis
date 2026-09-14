@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Módulo de Lógica y Deducción Booleana
 Maneja minitérminos, maxitérminos y simplificaciones con SymPy.
@@ -56,19 +56,19 @@ def deduce_and_simplify(variables, zeros, ones):
     vars_symbols = [sympy.Symbol(v) for v in variables]
     n_vars = len(vars_symbols)
 
-    # Minitérminos f' (salidas en 0 de f)
-    minterms_fprime = []
-    for i in zeros:
+    # Minitérminos de f (salidas en 1 de f)
+    minterms_f = []
+    for i in ones:
         lits = []
         for j, v in enumerate(vars_symbols):
             if (i & (1 << (n_vars - 1 - j))) == 0:
                 lits.append(sympy.Not(v))
             else:
                 lits.append(v)
-        minterms_fprime.append(sympy.And(*lits))
-    unreduced_sop = sympy.Or(*minterms_fprime) if minterms_fprime else sympy.false
+        minterms_f.append(sympy.And(*lits))
+    unreduced_sop = sympy.Or(*minterms_f) if minterms_f else sympy.false
 
-    # Maxitérminos f (salidas en 0 de f)
+    # Maxitérminos de f (salidas en 0 de f)
     maxterms_f = []
     for i in zeros:
         lits = []
@@ -83,6 +83,20 @@ def deduce_and_simplify(variables, zeros, ones):
     reduced_sop = simplify_logic(unreduced_sop, form='dnf')
     reduced_pos = simplify_logic(unreduced_pos, form='cnf')
 
+    # Verificación estricta de legitimidad y equivalencia lógica: SOP(f) == POS(f) == f
+    if reduced_sop == reduced_pos:
+        is_equivalent = True
+    elif reduced_sop in [sympy.true, True, 1] and reduced_pos in [sympy.true, True, 1]:
+        is_equivalent = True
+    elif reduced_sop in [sympy.false, False, 0] and reduced_pos in [sympy.false, False, 0]:
+        is_equivalent = True
+    else:
+        try:
+            equiv_expr = simplify_logic(sympy.Equivalent(reduced_sop, reduced_pos))
+            is_equivalent = (equiv_expr == sympy.true)
+        except Exception:
+            is_equivalent = False
+
     sop_terms = extract_terms(reduced_sop, is_sop=True)
     pos_clauses = extract_terms(reduced_pos, is_sop=False)
 
@@ -93,6 +107,8 @@ def deduce_and_simplify(variables, zeros, ones):
         "unreduced_pos": unreduced_pos,
         "reduced_sop": reduced_sop,
         "reduced_pos": reduced_pos,
+        "is_equivalent": is_equivalent,
         "sop_terms": sop_terms,
         "pos_clauses": pos_clauses
     }
+

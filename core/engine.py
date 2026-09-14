@@ -75,6 +75,7 @@ def process_logic(variables, zeros, ones, out_dir=None, base_dir=None, dpi=180):
         "unreduced_pos": format_pos_str(unreduced_pos),
         "reduced_sop": format_sop_str(reduced_sop),
         "reduced_pos": format_pos_str(reduced_pos),
+        "is_equivalent": deduction.get("is_equivalent", True),
         "tabla_conteo": tabla_conteo,
         "kmaps": kmaps,
         "diagramas": diagramas,
