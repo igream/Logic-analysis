@@ -355,6 +355,7 @@ async function processCurrentTable() {
         const img = card.querySelector('img');
         if (img) {
           img.src = '/api/diagram/' + r.id + '?t=' + timestamp;
+          img.onload = () => resetZoomDiagram('img_' + r.id);
         }
         const dl = card.querySelector('a[download]');
         if (dl) {
@@ -573,6 +574,7 @@ function switchKmapTab(tab) {
     btnMax.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white shadow-sm transition';
     btnMin.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
   }
+  resetZoomDiagram('kmapImage');
 }
 
 function switchCircuitFamily(fam) {
@@ -628,33 +630,81 @@ function zoomDiagram(imgId, delta) {
   if (!img) return;
   let cur = getZoomLevel(imgId);
   cur = Math.min(4.0, Math.max(0.3, cur + delta));
+  cur = Math.round(cur * 100) / 100;
   zoomLevels[imgId] = cur;
   applyDiagramZoom(imgId);
 }
 
 function resetZoomDiagram(imgId) {
   zoomLevels[imgId] = 1.0;
-  applyDiagramZoom(imgId, true);
+  const img = document.getElementById(imgId);
+  if (img && !img.complete) {
+    img.onload = () => applyDiagramZoom(imgId);
+  }
+  applyDiagramZoom(imgId);
 }
 
 function fitZoomDiagram(imgId) {
-  const img = document.getElementById(imgId);
-  if (!img) return;
   zoomLevels[imgId] = 1.0;
-  img.style.transform = 'scale(1)';
-  img.style.maxWidth = '100%';
-  img.style.width = 'auto';
-  updateZoomLabel(imgId, 1.0);
+  applyDiagramZoom(imgId);
 }
 
-function applyDiagramZoom(imgId, isReset = false) {
+function applyDiagramZoom(imgId) {
   const img = document.getElementById(imgId);
   if (!img) return;
+  const vp = img.closest('.diagram-viewport');
+  const wrapper = img.closest('.diagram-wrapper');
   const zoom = getZoomLevel(imgId);
-  img.style.maxWidth = (zoom > 1.0 || isReset) ? 'none' : '100%';
-  img.style.transform = `scale(${zoom})`;
-  img.style.transformOrigin = 'center center';
   updateZoomLabel(imgId, zoom);
+
+  if (Math.abs(zoom - 1.0) < 0.01) {
+    // 100% Auto-fit baseline: se adapta limpiamente al viewport de la tarjeta
+    if (wrapper) {
+      wrapper.style.maxWidth = '100%';
+      wrapper.style.width = '100%';
+    }
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '480px';
+    img.style.width = 'auto';
+    img.style.height = 'auto';
+    img.style.transform = 'none';
+    if (vp) {
+      vp.scrollLeft = 0;
+      vp.scrollTop = 0;
+    }
+    return;
+  }
+
+  // Zoom diferente a 1.0: escalar de manera proporcional a la vista ajustada
+  const natW = img.naturalWidth || 1200;
+  const natH = img.naturalHeight || 600;
+  const aspect = natW / Math.max(1, natH);
+
+  const availW = vp ? Math.max(200, vp.clientWidth - 32) : 800;
+  const availH = 480;
+  const baseFitW = Math.min(availW, availH * aspect);
+
+  const prevW = img.clientWidth || baseFitW;
+  const targetW = Math.round(baseFitW * zoom);
+
+  if (wrapper) {
+    wrapper.style.maxWidth = 'none';
+    wrapper.style.width = targetW + 'px';
+  }
+  img.style.maxWidth = 'none';
+  img.style.maxHeight = 'none';
+  img.style.width = targetW + 'px';
+  img.style.height = 'auto';
+  img.style.transform = 'none';
+
+  // Mantener centrado suave del scroll durante el zoom
+  if (vp && prevW > 0 && targetW !== prevW) {
+    const ratio = targetW / prevW;
+    const centerX = vp.scrollLeft + vp.clientWidth / 2;
+    const centerY = vp.scrollTop + vp.clientHeight / 2;
+    vp.scrollLeft = Math.max(0, centerX * ratio - vp.clientWidth / 2);
+    vp.scrollTop = Math.max(0, centerY * ratio - vp.clientHeight / 2);
+  }
 }
 
 // Paneo por arrastre del mouse (Drag to Pan)
@@ -822,4 +872,24 @@ window.addEventListener('DOMContentLoaded', () => {
   updateSelectedDiagramsCount();
   initDiagramViewports();
   initLightboxEvents();
+
+  // Asegurar autoajuste inicial perfecto
+  resetZoomDiagram('kmapImage');
+  allDiagramIds.forEach(id => {
+    resetZoomDiagram('img_' + id);
+  });
+});
+
+window.addEventListener('resize', () => {
+  // Recalcular diagrama K-Map si tiene zoom diferente a 1.0
+  if (zoomLevels['kmapImage'] !== undefined && Math.abs(zoomLevels['kmapImage'] - 1.0) > 0.01) {
+    applyDiagramZoom('kmapImage');
+  }
+  // Para los diagramas con zoom activo diferente a 1.0, recalcular tamaño
+  allDiagramIds.forEach(id => {
+    const key = 'img_' + id;
+    if (zoomLevels[key] !== undefined && Math.abs(zoomLevels[key] - 1.0) > 0.01) {
+      applyDiagramZoom(key);
+    }
+  });
 });

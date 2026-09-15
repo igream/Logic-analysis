@@ -36,6 +36,7 @@ STATIC_GEN_DIR = os.path.join(BASE_DIR, "static", "generated")
 os.makedirs(STATIC_GEN_DIR, exist_ok=True)
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 @app.context_processor
