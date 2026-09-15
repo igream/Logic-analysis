@@ -38,12 +38,25 @@ def _render_structured_circuit(terms, is_sop, title, outlabel, filepath, figsize
     neg_vars_needed = sorted(list(set(str(l.args[0]) for l in all_lits if isinstance(l, sympy.Not))))
 
     if not is_sop:
+        vars_needed = []
+        neg_vars_needed = []
         for t in terms:
-            for l in t:
+            if len(t) == 1:
+                l = t[0]
                 if isinstance(l, sympy.Not):
-                    vars_needed.append(str(l.args[0]))
+                    vname = str(l.args[0])
+                    vars_needed.append(vname)
+                    neg_vars_needed.append(vname)
                 else:
-                    neg_vars_needed.append(str(l))
+                    vars_needed.append(str(l))
+            else:
+                for l in t:
+                    if isinstance(l, sympy.Not):
+                        vars_needed.append(str(l.args[0]))
+                    else:
+                        vname = str(l)
+                        vars_needed.append(vname)
+                        neg_vars_needed.append(vname)
         vars_needed = sorted(list(set(vars_needed)))
         neg_vars_needed = sorted(list(set(neg_vars_needed)))
 
@@ -125,12 +138,18 @@ def _render_structured_circuit(terms, is_sop, title, outlabel, filepath, figsize
         if is_sop:
             lits = [f"{l.args[0]}'" if isinstance(l, sympy.Not) else str(l) for l in t]
         else:
-            lits = []
-            for l in t:
-                if isinstance(l, sympy.Not):
-                    lits.append(str(l.args[0]))
-                else:
-                    lits.append(f"{str(l)}'")
+            if len(t) == 1:
+                # En cláusula POS unitaria (L), la señal no pasa por NAND; se conecta directamente L
+                l = t[0]
+                lits = [f"{l.args[0]}'" if isinstance(l, sympy.Not) else str(l)]
+            else:
+                # Cláusula de >=2 literales: cada literal entra invertido a NAND: (A + B) = NAND(A', B')
+                lits = []
+                for l in t:
+                    if isinstance(l, sympy.Not):
+                        lits.append(str(l.args[0]))
+                    else:
+                        lits.append(f"{str(l)}'")
 
         if len(lits) == 1:
             lit_name = lits[0]

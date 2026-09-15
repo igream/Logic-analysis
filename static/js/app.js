@@ -37,9 +37,10 @@ function updateSelectedDiagramsCount() {
     lbl.innerText = `${selected.length} de ${allDiagramIds.length}`;
   }
   
+  const hParam = window.currentFuncHash ? `&h=${encodeURIComponent(window.currentFuncHash)}` : '';
   const zipQuery = selected.length === allDiagramIds.length
-    ? '/api/download_zip'
-    : (selected.length === 0 ? '#' : `/api/download_zip?diagrams=${selected.join(',')}`);
+    ? `/api/download_zip?diagrams=${allDiagramIds.join(',')}${hParam}`
+    : (selected.length === 0 ? '#' : `/api/download_zip?diagrams=${selected.join(',')}${hParam}`);
 
   document.querySelectorAll('.zip-download-btn').forEach(btn => {
     btn.href = zipQuery;
@@ -306,6 +307,10 @@ async function processCurrentTable() {
       return;
     }
 
+    const currentHash = json.hash || '';
+    window.currentFuncHash = currentHash;
+    const hashParam = currentHash ? `&h=${encodeURIComponent(currentHash)}` : '';
+
     const d = json.data;
     const timestamp = Date.now();
 
@@ -348,18 +353,18 @@ async function processCurrentTable() {
 
     switchKmapTab(currentKmapTab);
 
-    // Actualizar dinámicamente las 10 tarjetas de diagramas y las etiquetas del Paso 3
+    // Actualizar dinámicamente las tarjetas de diagramas y las etiquetas del Paso 3
     d.tabla_conteo.forEach(r => {
       const card = document.getElementById('card_' + r.id);
       if (card) {
         const img = card.querySelector('img');
         if (img) {
-          img.src = '/api/diagram/' + r.id + '?t=' + timestamp;
+          img.src = '/api/diagram/' + r.id + '?t=' + timestamp + hashParam;
           img.onload = () => resetZoomDiagram('img_' + r.id);
         }
         const dl = card.querySelector('a[download]');
         if (dl) {
-          dl.href = '/api/diagram/' + r.id + '?t=' + timestamp;
+          dl.href = '/api/diagram/' + r.id + '?t=' + timestamp + hashParam;
         }
         const p = card.querySelector('p');
         if (p) {
@@ -449,6 +454,7 @@ async function processCurrentTable() {
     });
 
     applyDiagramFiltering();
+    updateSelectedDiagramsCount();
 
   } catch (err) {
     alert('Error de conexión: ' + err.message);

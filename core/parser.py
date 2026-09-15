@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Módulo de Parseo de Funciones Lógicas
 """
@@ -51,7 +51,19 @@ def parse_function_text(text):
         req_bits = len(variables)
         
     total_states = 2 ** req_bits
-    if zeros is not None and ones is None:
+    if zeros is not None:
+        zeros = sorted(list(set([z for z in zeros if 0 <= z < total_states])))
+    if ones is not None:
+        ones = sorted(list(set([o for o in ones if 0 <= o < total_states])))
+
+    if zeros is not None and ones is not None:
+        conflict = set(zeros).intersection(set(ones))
+        if conflict:
+            raise ValueError(f"Conflicto lógico: los índices {sorted(list(conflict))} están definidos en 0 y en 1 simultáneamente.")
+        if len(zeros) + len(ones) < total_states:
+            missing = [i for i in range(total_states) if i not in zeros and i not in ones]
+            zeros = sorted(zeros + missing)
+    elif zeros is not None and ones is None:
         ones = sorted([i for i in range(total_states) if i not in zeros])
     elif ones is not None and zeros is None:
         zeros = sorted([i for i in range(total_states) if i not in ones])

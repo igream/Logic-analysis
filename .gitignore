@@ -8,4 +8,7 @@ venv/
 .vscode/
 Thumbs.db
 scratch/
+*.zip
 static/generated/current_state.json
+static/generated/state_*.json
+static/generated/*_[0-9a-f]*.png

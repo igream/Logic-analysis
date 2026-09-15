@@ -1,18 +1,14 @@
-﻿# ==============================================================================
+# ==============================================================================
 # ARCHIVO DE CONFIGURACIÓN DE LA FUNCIÓN LÓGICA (Reductor)
 # ==============================================================================
 # Aquí puedes especificar la función booleana a procesar.
 #
 # Formatos soportados:
-# 1. Por salidas en 0 (Lógica de Maxitérminos - POS):
-#    f = (0, 1, 2, 5, 6, 7, 11, 15)
-#    o bien:
-#    salidas_en_0 = 0, 1, 2, 5, 6, 7, 11, 15
+# 1. Por salidas en 0 (Lógica de Maxitérminos - POS de f):
+#    f = (0, 1, 2, 5, 6, 7, 11, 15)  [o salidas_en_0]
 #
-# 2. Por salidas en 1 (Lógica de Minitérminos - SOP):
-#    f' = (3, 4, 8, 9, 10, 12, 13, 14)
-#    o bien:
-#    salidas_en_1 = 3, 4, 8, 9, 10, 12, 13, 14
+# 2. Por salidas en 1 (Lógica de Minitérminos - SOP de f):
+#    f = (3, 4, 8, 9, 10, 12, 13, 14)  [o salidas_en_1]
 #
 # 3. Variables de entrada (Opcional, si se omite se infiere según los bits):
 #    variables = A, B, C, D

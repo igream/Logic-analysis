@@ -37,7 +37,7 @@ def main():
 
     print(f"Variables identificadas ({n_vars}): {', '.join(var_names)}")
     print(f"Salidas en 0 (Maxitérminos de f)  : {f_zeros}")
-    print(f"Salidas en 1 (Minitérminos de f') : {f_ones}")
+    print(f"Salidas en 1 (Minitérminos de f)  : {f_ones}")
 
     # Ejecutar motor lógico
     tmp_out = os.path.join(base_dir, "static", "generated")
@@ -47,9 +47,9 @@ def main():
     print("\n" + "-" * 85)
     print("1. DEDUCCIÓN ANALÍTICA BOOLEANA")
     print("-" * 85)
-    print(f"\n1. Minitérminos no reducida (f'):\n   f' = {res['unreduced_sop']}")
-    print(f"\n2. Maxitérminos no reducida (f):\n   f = {res['unreduced_pos']}")
-    print(f"\n3. Minitérminos reducida (f' - SOP):\n   f' = {res['reduced_sop']}")
+    print(f"\n1. Minitérminos no reducida (f - SOP):\n   f = {res['unreduced_sop']}")
+    print(f"\n2. Maxitérminos no reducida (f - POS):\n   f = {res['unreduced_pos']}")
+    print(f"\n3. Minitérminos reducida (f - SOP):\n   f = {res['reduced_sop']}")
     print(f"\n4. Maxitérminos reducida (f - POS):\n   f = {res['reduced_pos']}")
 
     # Organizar resultados en carpetas de Resultados/
@@ -79,6 +79,8 @@ def main():
         "pos_nor_reducido": dir_nor,
         "sop_nor": dir_nor,
         "sop_nor_reducido": dir_nor,
+        "sop_nand_dag": dir_nand,
+        "pos_nand_dag": dir_nand,
     }
 
     for diag_id, fname in res["diagramas"].items():
