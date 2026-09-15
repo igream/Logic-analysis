@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Módulo de Versionado Dinámico y Fecha de Actualización Automática.
-Calcula la versión del proyecto a partir del historial de commits de Git:
-Inicia en v1.0, escala secuencialmente en cada corrección (v1.1, v1.2 ... v1.9),
-avanzando a v2.0, v2.1, etc., de manera 100% automática y sin intervención manual.
+Calcula la versión del proyecto de forma dinámica y alineada con las Releases de Git:
+Toma como referencia la última Release/Tag creada (ej: v1.0).
+Cada nuevo commit incrementa automáticamente el dígito menor (v1.1, v1.2 ... v1.9),
+avanzando a v2.0, v2.1, etc. Al crear una nueva Release/Tag en el repositorio,
+el conteo se sincroniza automáticamente con ella.
 """
 
 import os
 import subprocess
 import datetime
-
-# Conteo base de commits para anclar la versión inicial en v1.0 (commit actual #20)
-BASE_COMMIT_COUNT = 20
 
 _VERSION_CACHE = None
 _UPDATED_CACHE = None
@@ -34,21 +33,35 @@ def get_version_info():
     if _VERSION_CACHE is not None and _UPDATED_CACHE is not None:
         return _VERSION_CACHE, _UPDATED_CACHE
 
-    total_commits = None
-    commit_time = None
     repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    version = None
+    commit_time = None
 
-    # 1. Intentar consultar Git
+    # 1. Intentar calcular versión dinámica a partir de git describe (Tags / Releases)
     try:
-        count_out = subprocess.check_output(
-            ["git", "rev-list", "--count", "HEAD"],
+        desc = subprocess.check_output(
+            ["git", "describe", "--tags", "--match=v*", "--long"],
             cwd=repo_dir,
             stderr=subprocess.DEVNULL
         ).decode().strip()
-        total_commits = int(count_out)
+        
+        # Formato esperado: v1.0-0-g17834a6
+        parts = desc.split("-")
+        tag_str = parts[0].lstrip("v")
+        count = int(parts[1])
+
+        tag_parts = [int(p) for p in tag_str.split(".")]
+        base_major = tag_parts[0] if len(tag_parts) > 0 else 1
+        base_minor = tag_parts[1] if len(tag_parts) > 1 else 0
+
+        total_offset = base_minor + count
+        major = base_major + (total_offset // 10)
+        minor = total_offset % 10
+        version = f"v{major}.{minor}"
     except Exception:
         pass
 
+    # 2. Obtener timestamp del commit
     try:
         time_out = subprocess.check_output(
             ["git", "log", "-1", "--format=%ct"],
@@ -59,29 +72,17 @@ def get_version_info():
     except Exception:
         pass
 
-    # 2. Fallbacks si git no está disponible
-    if total_commits is None:
-        # Fallback a conteo base si no hay git
-        total_commits = BASE_COMMIT_COUNT
+    # 3. Fallbacks si git no está disponible
+    if version is None:
+        version = "v1.0"
 
     if commit_time is None:
-        # Usar la fecha de modificación del archivo más reciente del core o app.py
         app_file = os.path.join(repo_dir, "app.py")
         if os.path.exists(app_file):
             mtime = os.path.getmtime(app_file)
             commit_time = datetime.datetime.fromtimestamp(mtime)
         else:
             commit_time = datetime.datetime.now()
-
-    # 3. Regla matemática de progresión de versiones:
-    # offset = 0 -> v1.0
-    # offset = 1 -> v1.1 ... offset = 9 -> v1.9
-    # offset = 10 -> v2.0 ... offset = 19 -> v2.9
-    # offset = 20 -> v3.0 ...
-    offset = max(0, total_commits - BASE_COMMIT_COUNT)
-    major = 1 + (offset // 10)
-    minor = offset % 10
-    version = f"v{major}.{minor}"
 
     updated_str = _format_spanish_date(commit_time)
 
