@@ -31,6 +31,11 @@ from .circuit_trees import (
     build_tree_nor_direct_sop,
     build_tree_nor_reduced_sop,
 )
+from .circuit_dag import (
+    synthesize_nand_dag_sop,
+    synthesize_nand_dag_pos,
+)
+from .dag_drawer import render_dag_to_file
 
 DIAGRAM_FILENAMES = {
     "sop_and_or_not": "diagrama_SOP_AND_OR_NOT.png",
@@ -43,6 +48,8 @@ DIAGRAM_FILENAMES = {
     "pos_nor_reducido": "diagrama_POS_NOR_reducido.png",
     "sop_nor": "diagrama_SOP_NOR.png",
     "sop_nor_reducido": "diagrama_SOP_NOR_reducido.png",
+    "sop_nand_dag": "diagrama_SOP_NAND_dag.png",
+    "pos_nand_dag": "diagrama_POS_NAND_dag.png",
 }
 
 
@@ -254,6 +261,20 @@ def get_diagram_spec(diagram_id, reduced_sop, reduced_pos, sop_terms, pos_clause
             "diagrama_SOP_NOR_reducido.png",
             (16, 9)
         ),
+        "sop_nand_dag": (
+            lambda: synthesize_nand_dag_sop(sop_terms),
+            "F",
+            f"SOP Universal NAND Optimizado (DAG / Reutilización)\nf = {format_sop_str(reduced_sop)}",
+            "diagrama_SOP_NAND_dag.png",
+            (18, 9)
+        ),
+        "pos_nand_dag": (
+            lambda: synthesize_nand_dag_pos(pos_clauses),
+            "F",
+            f"POS Universal NAND Optimizado (DAG / Reutilización)\nf = {format_pos_str(reduced_pos)}",
+            "diagrama_POS_NAND_dag.png",
+            (18, 9)
+        ),
     }
     return specs.get(diagram_id)
 
@@ -268,8 +289,15 @@ def render_single_diagram(diagram_id, reduced_sop, reduced_pos, sop_terms, pos_c
 
     builder_fn, outlabel, title, filename, figsize = spec
     filepath = os.path.join(out_dir, filename)
-    tree = builder_fn()
-    render_diagram_to_file(tree, outlabel, title, filepath, figsize=figsize, dpi=dpi)
+
+    if diagram_id in ["sop_nand_dag", "pos_nand_dag"]:
+        dag = builder_fn()
+        title_with_count = f"{title} | Total: {dag.count_nand_gates()} NANDs"
+        render_dag_to_file(dag, title_with_count, outlabel, filepath, figsize=figsize, dpi=dpi)
+    else:
+        tree = builder_fn()
+        render_diagram_to_file(tree, outlabel, title, filepath, figsize=figsize, dpi=dpi)
+
     return filename
 
 

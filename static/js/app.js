@@ -18,7 +18,9 @@ const allDiagramIds = [
   'pos_nor',
   'pos_nor_reducido',
   'sop_nor',
-  'sop_nor_reducido'
+  'sop_nor_reducido',
+  'sop_nand_dag',
+  'pos_nand_dag'
 ];
 
 function getSelectedDiagrams() {
@@ -55,12 +57,14 @@ function selectDiagramGroup(group) {
   let targetSet = new Set();
   if (group === 'all') {
     targetSet = new Set(allDiagramIds);
+  } else if (group === 'dag') {
+    targetSet = new Set(['sop_nand_dag', 'pos_nand_dag']);
   } else if (group === 'reduced') {
-    targetSet = new Set(['sop_nand_reducido', 'pos_nand_reducido', 'pos_nor_reducido', 'sop_nor_reducido']);
+    targetSet = new Set(['sop_nand_reducido', 'pos_nand_reducido', 'pos_nor_reducido', 'sop_nor_reducido', 'sop_nand_dag', 'pos_nand_dag']);
   } else if (group === 'and_or') {
     targetSet = new Set(['sop_and_or_not', 'pos_and_or_not']);
   } else if (group === 'nand') {
-    targetSet = new Set(['sop_nand', 'sop_nand_reducido', 'pos_nand', 'pos_nand_reducido']);
+    targetSet = new Set(['sop_nand', 'sop_nand_reducido', 'pos_nand', 'pos_nand_reducido', 'sop_nand_dag', 'pos_nand_dag']);
   } else if (group === 'nor') {
     targetSet = new Set(['pos_nor', 'pos_nor_reducido', 'sop_nor', 'sop_nor_reducido']);
   } else if (group === 'none') {
@@ -100,6 +104,10 @@ function applyDiagramFiltering() {
   const norVisible = ['pos_nor', 'pos_nor_reducido', 'sop_nor', 'sop_nor_reducido'].some(id => selected.has(id));
   const emptyNor = document.getElementById('empty_gallery_nor');
   if (emptyNor) emptyNor.classList.toggle('hidden', norVisible);
+
+  const dagVisible = ['sop_nand_dag', 'pos_nand_dag'].some(id => selected.has(id));
+  const emptyDag = document.getElementById('empty_gallery_dag');
+  if (emptyDag) emptyDag.classList.toggle('hidden', dagVisible);
 
   allDiagramIds.forEach(id => {
     const row = document.getElementById('tbl_row_' + id);
@@ -403,6 +411,22 @@ async function processCurrentTable() {
     const bSopNor = document.querySelector('#card_sop_nor_reducido .bg-brand-100');
     if (bSopNor) bSopNor.innerText = `${Math.max(0, sopNorDir - sopNorRed)} compuertas ahorradas`;
 
+    const sopNandDag = d.tabla_conteo.find(x => x.id === 'sop_nand_dag')?.total || 0;
+    const bSopDag = document.querySelector('#card_sop_nand_dag .badge-saving');
+    if (bSopDag) {
+      const savedDir = Math.max(0, sopNandDir - sopNandDag);
+      const savedRed = Math.max(0, sopNandRed - sopNandDag);
+      bSopDag.innerText = `${savedDir} ahorradas vs directo (${savedRed} vs reducido)`;
+    }
+
+    const posNandDag = d.tabla_conteo.find(x => x.id === 'pos_nand_dag')?.total || 0;
+    const bPosDag = document.querySelector('#card_pos_nand_dag .badge-saving');
+    if (bPosDag) {
+      const savedDir = Math.max(0, posNandDir - posNandDag);
+      const savedRed = Math.max(0, posNandRed - posNandDag);
+      bPosDag.innerText = `${savedDir} ahorradas vs directo (${savedRed} vs reducido)`;
+    }
+
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
     d.tabla_conteo.forEach(r => {
@@ -555,13 +579,15 @@ function switchCircuitFamily(fam) {
   const gAndOr = document.getElementById('gallery_and_or');
   const gNand = document.getElementById('gallery_nand');
   const gNor = document.getElementById('gallery_nor');
+  const gDag = document.getElementById('gallery_dag');
 
   const tAndOr = document.getElementById('tab_and_or');
   const tNand = document.getElementById('tab_nand');
   const tNor = document.getElementById('tab_nor');
+  const tDag = document.getElementById('tab_dag');
 
-  [gAndOr, gNand, gNor].forEach(g => g.classList.add('hidden'));
-  [tAndOr, tNand, tNor].forEach(t => {
+  [gAndOr, gNand, gNor, gDag].filter(Boolean).forEach(g => g.classList.add('hidden'));
+  [tAndOr, tNand, tNor, tDag].filter(Boolean).forEach(t => {
     t.className = 'px-3 py-1.5 font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition';
   });
 
@@ -571,9 +597,12 @@ function switchCircuitFamily(fam) {
   } else if (fam === 'nand') {
     gNand.classList.remove('hidden');
     tNand.className = 'px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition';
-  } else {
+  } else if (fam === 'nor') {
     gNor.classList.remove('hidden');
     tNor.className = 'px-3 py-1.5 font-semibold rounded-lg bg-white shadow-sm text-slate-900 transition';
+  } else if (fam === 'dag') {
+    gDag.classList.remove('hidden');
+    tDag.className = 'px-3 py-1.5 font-semibold rounded-lg bg-emerald-600 text-white shadow-sm transition';
   }
 }
 

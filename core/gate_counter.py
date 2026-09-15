@@ -16,6 +16,10 @@ from .circuit_trees import (
     build_tree_nor_direct_sop,
     build_tree_nor_reduced_sop
 )
+from .circuit_dag import (
+    synthesize_nand_dag_sop,
+    synthesize_nand_dag_pos
+)
 
 def _count_tree_gates(node):
     counts = {"not": 0, "and": 0, "or": 0, "nand": 0, "nor": 0}
@@ -56,6 +60,8 @@ def count_gates(variables, zeros, sop_terms, pos_clauses):
     c8 = _count_tree_gates(build_tree_nor_reduced_pos(pos_clauses))
     c9 = _count_tree_gates(build_tree_nor_direct_sop(sop_terms))
     c10 = _count_tree_gates(build_tree_nor_reduced_sop(sop_terms))
+    c11_nand = synthesize_nand_dag_sop(sop_terms).count_nand_gates()
+    c12_nand = synthesize_nand_dag_pos(pos_clauses).count_nand_gates()
 
     tabla_conteo = [
         {"num": 1, "id": "sop_and_or_not", "nombre": "SOP Minitérminos (f)", "tipo": "AND / OR / NOT", "not": c1["not"], "and": c1["and"], "or": c1["or"], "nand": 0, "nor": 0, "total": c1["total"], "archivo": "diagrama_SOP_AND_OR_NOT.png"},
@@ -68,5 +74,7 @@ def count_gates(variables, zeros, sop_terms, pos_clauses):
         {"num": 8, "id": "pos_nor_reducido", "nombre": "POS Universal NOR Reducido (f)", "tipo": "NOR Doble Negación", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": c8["nor"], "total": c8["total"], "archivo": "diagrama_POS_NOR_reducido.png"},
         {"num": 9, "id": "sop_nor", "nombre": "SOP Universal NOR (f)", "tipo": "NOR Directo", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": c9["nor"], "total": c9["total"], "archivo": "diagrama_SOP_NOR.png"},
         {"num": 10, "id": "sop_nor_reducido", "nombre": "SOP Universal NOR Reducido (f)", "tipo": "NOR Doble Negación", "not": 0, "and": 0, "or": 0, "nand": 0, "nor": c10["nor"], "total": c10["total"], "archivo": "diagrama_SOP_NOR_reducido.png"},
+        {"num": 11, "id": "sop_nand_dag", "nombre": "SOP Universal NAND Optimizado (f)", "tipo": "NAND Reutilización (DAG/CSE)", "not": 0, "and": 0, "or": 0, "nand": c11_nand, "nor": 0, "total": c11_nand, "archivo": "diagrama_SOP_NAND_dag.png"},
+        {"num": 12, "id": "pos_nand_dag", "nombre": "POS Universal NAND Optimizado (f)", "tipo": "NAND Reutilización (DAG/CSE)", "not": 0, "and": 0, "or": 0, "nand": c12_nand, "nor": 0, "total": c12_nand, "archivo": "diagrama_POS_NAND_dag.png"},
     ]
     return tabla_conteo
