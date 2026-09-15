@@ -229,6 +229,8 @@ def synthesize_nand_dag_sop(terms):
         out_root.label = "F"
 
     dag.output_node = out_root
+    dag.terms = terms
+    dag.is_sop = True
     dag.assign_layers()
     return dag
 
@@ -371,5 +373,8 @@ def synthesize_nand_dag_pos(clauses):
     out_root = build_and_tree(clause_outputs)
     out_root.label = "F"
     dag.output_node = out_root
+    dag.terms = clauses
+    dag.clauses = clauses
+    dag.is_sop = False
     dag.assign_layers()
     return dag
