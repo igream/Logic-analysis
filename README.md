@@ -3,6 +3,7 @@
 Reductor booleano y sintetizador de circuitos digitales con compuertas de dos entradas.
 
 Repositorio: https://github.com/igream/Logic-analysis
+Acceso a prueba: https://logic-analysis.onrender.com
 
 ## Descripcion
 
