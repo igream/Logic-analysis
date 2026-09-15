@@ -10,6 +10,7 @@ from .gate_counter import count_gates
 from .kmaps import generate_kmaps
 from .circuit_drawer import generate_or_restore_all_diagrams, render_single_diagram, DIAGRAM_FILENAMES
 from .resource_manager import get_system_profile, cleanup_memory
+from .version import get_version_info
 
 __all__ = [
     "process_logic",
@@ -26,4 +27,5 @@ __all__ = [
     "DIAGRAM_FILENAMES",
     "get_system_profile",
     "cleanup_memory",
+    "get_version_info",
 ]

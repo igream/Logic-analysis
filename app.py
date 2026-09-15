@@ -28,6 +28,7 @@ from core import (
     DIAGRAM_FILENAMES,
     get_system_profile,
     cleanup_memory,
+    get_version_info,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +38,16 @@ os.makedirs(STATIC_GEN_DIR, exist_ok=True)
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
 
+@app.context_processor
+def inject_version_metadata():
+    """Inyecta dinámicamente la versión actual y la fecha de última actualización a todas las plantillas."""
+    ver, updated = get_version_info()
+    return {
+        "app_version": ver,
+        "app_updated": updated,
+    }
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -44,8 +55,12 @@ def index():
 
 @app.route("/api/profile")
 def api_profile():
-    """Retorna información del perfil de recursos asignado dinámicamente."""
-    return jsonify(get_system_profile())
+    """Retorna información del perfil de recursos asignado dinámicamente y versión."""
+    prof = get_system_profile()
+    ver, updated = get_version_info()
+    prof["app_version"] = ver
+    prof["app_updated"] = updated
+    return jsonify(prof)
 
 
 @app.route("/api/process", methods=["POST"])

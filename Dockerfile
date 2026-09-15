@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 # Instalar herramientas básicas del sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    build-essential git \
     && rm -rf /var/lib/apt/lists/*
 
 # Configurar usuario sin privilegios (estándar para Hugging Face Spaces)
